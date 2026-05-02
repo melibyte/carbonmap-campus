@@ -185,6 +185,60 @@ def insert_record(record: dict[str, Any]) -> None:
     conn.close()
 
 
+
+
+def update_record_by_id(record_id: str, payload: RecordInput) -> dict[str, Any]:
+    record = create_record_object(payload)
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM records WHERE id = ?", (record_id,))
+    existing = cursor.fetchone()
+    if existing is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı.")
+
+    cursor.execute(
+        """
+        UPDATE records
+        SET location = ?, category = ?, amount = ?, unit = ?, factor = ?, scope = ?,
+            total_emission = ?, source = ?, confidence = ?, status = ?, date = ?, description = ?
+        WHERE id = ?
+        """,
+        (
+            record["location"],
+            record["category"],
+            record["amount"],
+            record["unit"],
+            record["factor"],
+            record["scope"],
+            record["total_emission"],
+            record["source"],
+            record["confidence"],
+            record["status"],
+            record["date"],
+            record["description"],
+            record_id,
+        ),
+    )
+    conn.commit()
+    cursor.execute("SELECT * FROM records WHERE id = ?", (record_id,))
+    updated = cursor.fetchone()
+    conn.close()
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı.")
+    return row_to_record(updated)
+
+
+def delete_record_by_id(record_id: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM records WHERE id = ?", (record_id,))
+    deleted = cursor.rowcount
+    conn.commit()
+    conn.close()
+    if deleted == 0:
+        raise HTTPException(status_code=404, detail="Kayıt bulunamadı.")
+
 def get_all_records() -> list[dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
@@ -248,6 +302,18 @@ def add_record(payload: RecordInput) -> dict[str, Any]:
     record = create_record_object(payload)
     insert_record(record)
     return api_record(record)
+
+
+@app.put("/api/records/{record_id}")
+def update_record(record_id: str, payload: RecordInput) -> dict[str, Any]:
+    return update_record_by_id(record_id, payload)
+
+
+@app.delete("/api/records/{record_id}")
+def delete_single_record(record_id: str) -> Response:
+    delete_record_by_id(record_id)
+    return Response(status_code=204)
+
 
 
 @app.post("/api/records/bulk")
