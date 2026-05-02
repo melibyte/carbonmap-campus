@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarbonMap Campus | Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">CM</div>
+        <div>
+          <h1>CarbonMap</h1>
+          <p>Campus Demo</p>
+        </div>
+      </div>
+
+      <nav class="nav-list">
+        <a href="#dashboard" class="nav-link active">Dashboard</a>
+        <a href="#data-entry" class="nav-link">Veri Girişi</a>
+        <a href="#campus-map" class="nav-link">Kampüs Haritası</a>
+        <a href="#simulator" class="nav-link">Senaryo Simülatörü</a>
+        <a href="#alarms" class="nav-link">Karbon Alarmları</a>
+        <a href="#actions" class="nav-link">Aksiyon Planı</a>
+        <a href="#csv" class="nav-link">Akıllı CSV</a>
+        <a href="#factors" class="nav-link">Faktörler</a>
+      </nav>
+
+      <div class="side-card backend-offline" id="backendInfoCard">
+        <span class="mini-label">Çalışma modu</span>
+        <p id="backendInfoText">Backend kontrol ediliyor...</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Üniversiteler için karbon zekâ platformu</p>
+          <h2>CarbonMap Campus</h2>
+          <p class="subtitle">Veri gir → karbon hesapla → haritada göster → alarm üret → senaryo hesapla → rapor al.</p>
+        </div>
+        <div class="top-actions">
+          <span class="backend-badge offline" id="backendStatusBadge">Backend: Kontrol ediliyor</span>
+          <button class="btn btn-secondary" id="seedDemoBtn">Demo Verisi Üret</button>
+          <button class="btn btn-ghost" id="resetBtn">Sıfırla</button>
+          <button class="btn btn-primary" id="pdfBtn">PDF Rapor Al</button>
+        </div>
+      </header>
+
+      <section class="hero-panel">
+        <div>
+          <span class="pill">Smart Carbon Engine</span>
+          <h3>Bu demo klasik karbon hesaplayıcı değil.</h3>
+          <p>Hesaplamayı açıklar, veri güvenini puanlar, anomali yakalar, karbon bütçesi alarmı üretir ve azaltım senaryosu oluşturur.</p>
+        </div>
+        <div class="hero-stats">
+          <div><strong id="heroTotal">0</strong><span>kg CO₂e</span></div>
+          <div><strong id="heroGrade">-</strong><span>Kampüs Notu</span></div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / Yönetim paneli</p>
+            <h3>Dashboard</h3>
+          </div>
+          <span class="badge" id="lastUpdateBadge">Henüz veri yok</span>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <span>Toplam Emisyon</span>
+            <strong id="totalEmission">0 kg CO₂e</strong>
+            <small>Onaylı ve incelemedeki kayıtlar</small>
+          </article>
+          <article class="kpi-card">
+            <span>En Yüksek Kategori</span>
+            <strong id="topCategory">-</strong>
+            <small>Odaklanılması gereken kaynak</small>
+          </article>
+          <article class="kpi-card">
+            <span>En Yüksek Lokasyon</span>
+            <strong id="topLocation">-</strong>
+            <small>Öncelikli müdahale alanı</small>
+          </article>
+          <article class="kpi-card">
+            <span>Veri Güven Skoru</span>
+            <strong id="confidenceScore">0%</strong>
+            <small>Veri kaynaklarına göre ağırlıklı skor</small>
+          </article>
+          <article class="kpi-card alert-kpi">
+            <span>Aktif Alarm</span>
+            <strong id="activeAlarmCount">0</strong>
+            <small>Bütçe aşımı / anomali</small>
+          </article>
+          <article class="kpi-card">
+            <span>Hedef Durumu</span>
+            <strong id="targetStatus">-</strong>
+            <small>2026 baz yılına göre</small>
+          </article>
+        </div>
+
+        <div class="chart-grid">
+          <article class="panel chart-panel">
+            <div class="panel-title">
+              <h4>Kategori Bazlı Dağılım</h4>
+              <span>kg CO₂e</span>
+            </div>
+            <canvas id="categoryChart"></canvas>
+          </article>
+          <article class="panel chart-panel">
+            <div class="panel-title">
+              <h4>Lokasyon Bazlı Emisyon</h4>
+              <span>kg CO₂e</span>
+            </div>
+            <canvas id="locationChart"></canvas>
+          </article>
+          <article class="panel chart-panel">
+            <div class="panel-title">
+              <h4>Aylık Değişim</h4>
+              <span>Trend</span>
+            </div>
+            <canvas id="monthlyChart"></canvas>
+          </article>
+          <article class="panel chart-panel">
+            <div class="panel-title">
+              <h4>Scope Dağılımı</h4>
+              <span>Kurumsal kırılım</span>
+            </div>
+            <canvas id="scopeChart"></canvas>
+          </article>
+        </div>
+      </section>
+
+      <section id="data-entry" class="section-block split-layout">
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">02 / Veri toplama</p>
+              <h3>Karbon Kaydı Ekle</h3>
+            </div>
+          </div>
+          <form id="emissionForm" class="form-grid">
+            <label>
+              Lokasyon
+              <select id="locationInput" required></select>
+            </label>
+            <label>
+              Kategori
+              <select id="categoryInput" required></select>
+            </label>
+            <label>
+              Miktar
+              <input id="amountInput" type="number" min="0" step="0.01" placeholder="Örn: 3200" required />
+            </label>
+            <label>
+              Birim
+              <input id="unitInput" type="text" readonly />
+            </label>
+            <label>
+              Veri Kaynağı
+              <select id="sourceInput" required>
+                <option value="Fatura">Fatura</option>
+                <option value="Sayaç verisi">Sayaç verisi</option>
+                <option value="CSV yükleme">CSV yükleme</option>
+                <option value="Manuel giriş">Manuel giriş</option>
+                <option value="Tahmini veri">Tahmini veri</option>
+              </select>
+            </label>
+            <label>
+              Kayıt Durumu
+              <select id="statusInput" required>
+                <option value="Onaylandı">Onaylandı</option>
+                <option value="İncelemede">İncelemede</option>
+                <option value="Taslak">Taslak</option>
+                <option value="Reddedildi">Reddedildi</option>
+              </select>
+            </label>
+            <label>
+              Tarih
+              <input id="dateInput" type="date" required />
+            </label>
+            <label>
+              Belge No / Açıklama
+              <input id="descriptionInput" type="text" placeholder="Örn: EF-2026-04-001" />
+            </label>
+            <button class="btn btn-primary form-submit" type="submit">Emisyonu Hesapla ve Kaydet</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">Şeffaf hesaplama</p>
+              <h3>Son Kayıtlar</h3>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lokasyon</th>
+                  <th>Kategori</th>
+                  <th>Emisyon</th>
+                  <th>Güven</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="recordsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="campus-map" class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / Görsel karar desteği</p>
+            <h3>Kampüs Karbon Haritası</h3>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-ghost" id="mapFitBtn" style="padding:10px 14px;font-size:13px">🗺️ Tüm Kampüsü Göster</button>
+          </div>
+        </div>
+        <div class="map-layout">
+          <div id="campusMap"></div>
+          <aside class="cm-map-sidebar">
+            <div class="cm-map-panel">
+              <p class="cm-map-panel-title">Kampüs Özeti</p>
+              <div class="cm-map-stats">
+                <div class="cm-map-stat">
+                  <span>Toplam Emisyon</span>
+                  <strong id="mapTotalEmission">—</strong>
+                </div>
+                <div class="cm-map-stat">
+                  <span>Aktif Alarm</span>
+                  <strong id="mapAlarmCount" style="color:#d9480f">—</strong>
+                </div>
+                <div class="cm-map-stat">
+                  <span>En Yüksek Risk</span>
+                  <strong id="mapHighestRisk">—</strong>
+                </div>
+                <div class="cm-map-stat">
+                  <span>Ort. Güven</span>
+                  <strong id="mapAvgConfidence">—</strong>
+                </div>
+              </div>
+            </div>
+            <section id="carbon-twin" class="carbon-twin-panel map-twin-card twin-neutral">
+              <div class="twin-copy">
+                <p class="eyebrow">00 / Dijital Karbon İkiz</p>
+                <h3><span id="carbonTwinEmoji">🌱</span> <span id="carbonTwinTitle">Kampüs Ruhu Verileri Bekliyor</span></h3>
+                <p id="carbonTwinMessage">Demo verisi üretildiğinde veya yeni kayıt eklendiğinde kampüsün karbon sağlığı burada canlı olarak özetlenir.</p>
+
+                <div class="twin-meter-wrap">
+                  <div class="twin-meter-top">
+                    <span>Karbon Sağlık Skoru</span>
+                    <strong><span id="carbonTwinScore">0</span>/100</strong>
+                  </div>
+                  <div class="twin-meter"><span id="carbonTwinMeter"></span></div>
+                </div>
+
+                <div class="twin-indicators">
+                  <span id="carbonTwinState">Durum: Bekleniyor</span>
+                  <span id="carbonTwinTrend">Trend: -</span>
+                  <span id="carbonTwinEnergy">Enerji Nabzı: -</span>
+                </div>
+              </div>
+
+              <div class="twin-visual">
+                <div id="campusTree" class="campus-tree normal" aria-label="Kampüs ruhu ağacı">
+                  <div class="tree-glow"></div>
+                  <div class="tree-crown crown crown-1"></div>
+                  <div class="tree-crown crown crown-2"></div>
+                  <div class="tree-crown crown crown-3"></div>
+                  <div class="tree-flower flower-1"></div>
+                  <div class="tree-flower flower-2"></div>
+                  <div class="tree-flower flower-3"></div>
+                  <div class="falling-leaf leaf-1"></div>
+                  <div class="falling-leaf leaf-2"></div>
+                  <div class="falling-leaf leaf-3"></div>
+                  <div class="tree-trunk"></div>
+                  <div class="tree-ground"></div>
+                </div>
+              </div>
+            </section>
+
+            <div class="cm-map-panel">
+              <p class="cm-map-panel-title">Lokasyonlar · Tıkla → Odaklan</p>
+              <div id="mapLegendList"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="simulator" class="section-block split-layout">
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">04 / Geleceği hesapla</p>
+              <h3>Senaryo Simülatörü</h3>
+            </div>
+          </div>
+          <form id="scenarioForm" class="form-grid scenario-form">
+            <label>
+              Lokasyon
+              <select id="scenarioLocation"></select>
+            </label>
+            <label>
+              Kategori
+              <select id="scenarioCategory"></select>
+            </label>
+            <label>
+              Azaltım Oranı (%)
+              <input id="reductionInput" type="number" min="1" max="90" value="15" />
+            </label>
+            <label>
+              Elektrik Birim Maliyeti (TL/kWh)
+              <input id="priceInput" type="number" min="0" step="0.01" value="5" />
+            </label>
+            <button class="btn btn-primary form-submit" type="submit">Senaryoyu Hesapla</button>
+          </form>
+        </div>
+        <div class="panel scenario-result" id="scenarioResult">
+          <span class="mini-label">Sonuç</span>
+          <h4>Henüz senaryo çalıştırılmadı</h4>
+          <p>Bir lokasyon ve kategori seçerek azaltım etkisini hesaplayın.</p>
+        </div>
+      </section>
+
+      <section id="alarms" class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">05 / Akıllı uyarılar</p>
+            <h3>Karbon Alarmları ve Anomali Tespiti</h3>
+          </div>
+        </div>
+        <div id="alarmsList" class="alarm-list"></div>
+      </section>
+
+      <section id="actions" class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">06 / Karar destek</p>
+            <h3>Aksiyon Planı ve Öncelik Puanı</h3>
+          </div>
+        </div>
+        <div id="actionList" class="action-list"></div>
+      </section>
+
+      <section id="csv" class="section-block split-layout">
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">07 / Dağınık Excel çözümü</p>
+              <h3>Akıllı CSV Yükleme</h3>
+            </div>
+          </div>
+          <p class="muted">CSV kolonları farklı isimde olsa bile alanları eşleştirip içe aktarabilirsiniz.</p>
+          <input type="file" id="csvFile" accept=".csv" class="file-input" />
+          <div id="mappingArea" class="mapping-area"></div>
+          <button class="btn btn-primary" id="importCsvBtn" disabled>CSV Verisini İçeri Aktar</button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">
+            <h3>Örnek CSV Formatı</h3>
+          </div>
+          <pre class="code-box">bina,tur,tuketim,tarih,kaynak
+Mühendislik Fakültesi,Elektrik,3200,2026-05-01,Fatura
+Yemekhane,Yemekhane,850,2026-05-02,Manuel giriş
+Otopark,Ulaşım,4200,2026-05-03,CSV yükleme</pre>
+        </div>
+      </section>
+
+      <section id="factors" class="section-block">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">08 / Hesaplama dayanağı</p>
+            <h3>Emisyon Faktörü Kütüphanesi</h3>
+          </div>
+        </div>
+        <div class="panel table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Kategori</th>
+                <th>Birim</th>
+                <th>Faktör</th>
+                <th>Scope</th>
+                <th>Demo açıklaması</th>
+              </tr>
+            </thead>
+            <tbody id="factorTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
