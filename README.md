@@ -151,8 +151,8 @@ Sistemde kullanılan kategoriler ve örnek faktörler:
 - Her sayfadan erişilebilir.
 - İdari personele veri girişi, dosya yükleme, dashboard okuma ve rapor alma konularında yardımcı olur.
 
----
 
+---
 ## Kullanılan Teknolojiler
 
 ### Frontend
@@ -270,91 +270,3 @@ E-posta: idari.personel@carbonmap.edu.tr
 
 > Backend kapalı olsa bile uygulama demo modunda tarayıcı `localStorage` üzerinde çalışmaya devam eder. Backend açıkken Düzce Üniversitesi varsayılan kampüs kayıtları FastAPI + SQLite üzerinden saklanır.
 
----
-
-## API Endpointleri
-
-| Method | Endpoint | Açıklama |
-|---|---|---|
-| GET | `/api/health` | Backend durumunu kontrol eder |
-| GET | `/api/records` | Karbon kayıtlarını listeler |
-| POST | `/api/records` | Yeni karbon kaydı ekler |
-| PUT | `/api/records/{record_id}` | Mevcut kaydı günceller |
-| DELETE | `/api/records/{record_id}` | Tek kaydı siler |
-| POST | `/api/records/bulk` | Toplu kayıt ekler |
-| DELETE | `/api/records` | Tüm kayıtları temizler |
-| POST | `/api/seed` | Demo verisi üretir |
-| GET | `/api/dashboard` | Dashboard özet verilerini döndürür |
-| POST | `/api/scenario` | Senaryo azaltım hesabı yapar |
-
----
-
-## Demo Akışı
-
-Jüri veya mentör sunumunda aşağıdaki akış kullanılabilir:
-
-1. Giriş ekranını gösterin.
-2. Demo kullanıcı ile sisteme giriş yapın.
-3. Kampüs haritasında lokasyonların görsel olarak listelendiğini gösterin.
-4. Farklı üniversite seçimi veya arama alanını gösterin.
-5. Kayıt & Raporlama sayfasına geçin.
-6. Manuel karbon kaydı ekleyin veya demo verisi üretin.
-7. Dashboard kartlarında toplam emisyon, en yüksek kategori ve en yüksek lokasyonu açıklayın.
-8. Grafiklerle emisyon dağılımlarını gösterin.
-9. CSV/Excel dosyası aktarım alanını gösterin.
-10. Rapor filtrelerinden lokasyon ve dönem seçin.
-11. Raporu yeni sayfada açarak PDF/Excel çıktısından önce web önizlemesi yapıldığını gösterin.
-12. Senaryo & Faktörler sayfasında bir azaltım senaryosu hesaplayın.
-13. Maliyet faydası ve emisyon azaltımını jüriye karar destek çıktısı olarak anlatın.
-14. Emisyon faktörü kütüphanesinin güncellenebilir olduğunu vurgulayın.
-15. Sağ alttaki yardım asistanının her sayfadan erişilebilir olduğunu gösterin.
-
----
-
-## Jüriye Kısa Anlatım
-
-> CarbonMap Campus, üniversite idari personelinin dağınık Excel verilerini tek bir karar destek panelinde birleştirerek kampüs bazlı karbon emisyonunu hesaplayan, haritada görselleştiren, azaltım senaryoları üreten ve PDF/Excel rapor önizlemesi sunan sürdürülebilirlik odaklı bir web prototipidir.
-
----
-
-## Projeyi Öne Çıkaran Noktalar
-
-- Sadece hesaplama yapmaz, karar desteği sunar.
-- Harita, dashboard, senaryo ve raporlama akışını tek sistemde birleştirir.
-- İdari personelin kullanabileceği sade ve anlaşılır bir arayüz hedefler.
-- Excel’den geçişi kolaylaştırmak için CSV/Excel içe aktarma desteği sunar.
-- PDF/Excel indirmeden önce web rapor önizlemesi verir.
-- Backend kapalıyken bile demo modunda çalışabilir.
-- Üniversite/kampüs yapısına göre genişletilebilir.
-
----
-
-## Geliştirilebilir Alanlar
-
-Bu proje hackathon prototipi olarak geliştirilmiştir. Gerçek kurum kullanımında aşağıdaki geliştirmeler yapılabilir:
-
-- Gerçek kullanıcı yetkilendirme sistemi
-- Kurumsal veritabanı entegrasyonu
-- Resmi emisyon faktörü yönetim paneli
-- Bina bazlı sayaç entegrasyonu
-- Fatura/PDF okuma ve otomatik veri çıkarma
-- Detaylı Scope 1, Scope 2, Scope 3 raporlama
-- Yönetici onay akışı
-- Kurumsal sürdürülebilirlik raporu formatı
-- Gerçek kampüs koordinat veri seti entegrasyonu
-
----
-
-## Takım
-
-**Takım Adı:** LogicWaves  
-**Proje Adı:** CarbonMap Campus
-
----
-
-## Notlar
-
-- Bu proje hackathon/demo amacıyla hazırlanmıştır.
-- Demo emisyon faktörleri gerçek uygulamada resmi ve güncel kaynaklarla doğrulanmalıdır.
-- Bazı kütüphaneler CDN üzerinden yüklendiği için grafik, harita, Excel ve PDF özellikleri için internet bağlantısı önerilir.
-- `.venv/` ve `backend/data/*.sqlite3` dosyaları GitHub'a yüklenmemelidir; `.gitignore` içinde hariç tutulmuştur.
