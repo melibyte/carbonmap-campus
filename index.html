@@ -12,64 +12,128 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
+  <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Menüyü aç/kapat">☰</button>
+
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">CM</div>
-        <div>
-          <h1>CarbonMap</h1>
-          <p>Campus Demo</p>
-        </div>
+      <div class="brand brand--sidebar">
+        <img src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" class="brand-logo sidebar-brand-logo" />
       </div>
 
       <nav class="nav-list">
-        <a href="#dashboard" class="nav-link active">Dashboard</a>
-        <a href="#data-entry" class="nav-link">Veri Girişi</a>
-        <a href="#campus-map" class="nav-link">Kampüs Haritası</a>
-        <a href="#simulator" class="nav-link">Senaryo Simülatörü</a>
-        <a href="#alarms" class="nav-link">Karbon Alarmları</a>
-        <a href="#actions" class="nav-link">Aksiyon Planı</a>
-        <a href="#csv" class="nav-link">Akıllı CSV</a>
-        <a href="#factors" class="nav-link">Faktörler</a>
+        <a href="#data-entry" class="nav-link active">1. Veri Girişi</a>
+        <a href="#dashboard" class="nav-link">2. Dashboard</a>
+        <a href="#campus-map" class="nav-link">3. Kampüs Haritası</a>
+        <a href="#simulator" class="nav-link">4. Senaryo Simülatörü</a>
+        <a href="#factors" class="nav-link">5. Faktörler</a>
       </nav>
-
-      <div class="side-card backend-offline" id="backendInfoCard">
-        <span class="mini-label">Çalışma modu</span>
-        <p id="backendInfoText">Backend kontrol ediliyor...</p>
-      </div>
     </aside>
 
     <main class="main-content">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Üniversiteler için karbon zekâ platformu</p>
-          <h2>CarbonMap Campus</h2>
-          <p class="subtitle">Veri gir → karbon hesapla → haritada göster → alarm üret → senaryo hesapla → rapor al.</p>
-        </div>
-        <div class="top-actions">
-          <span class="backend-badge offline" id="backendStatusBadge">Backend: Kontrol ediliyor</span>
-          <button class="btn btn-secondary" id="seedDemoBtn">Demo Verisi Üret</button>
-          <button class="btn btn-ghost" id="resetBtn">Sıfırla</button>
-          <button class="btn btn-primary" id="pdfBtn">PDF Rapor Al</button>
+      <header class="topbar fixed-navbar">
+        <div class="navbar-main-row">
+          <div class="navbar-brandline">
+            <div class="navbar-brand-text">
+              <p class="eyebrow">İdari Personel Paneli</p>
+              <img src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" class="brand-logo navbar-brand-logo" />
+            </div>
+          </div>
+          <nav class="top-nav" aria-label="Sayfa bölümleri">
+            <a href="#data-entry" class="nav-link active">Veri Girişi</a>
+            <a href="#dashboard" class="nav-link">Dashboard</a>
+            <a href="#campus-map" class="nav-link">Kampüs Haritası</a>
+            <a href="#simulator" class="nav-link">Senaryo Simülatörü</a>
+            <a href="#factors" class="nav-link">Faktörler</a>
+          </nav>
         </div>
       </header>
 
-      <section class="hero-panel">
-        <div>
-          <span class="pill">Smart Carbon Engine</span>
-          <h3>Bu demo klasik karbon hesaplayıcı değil.</h3>
-          <p>Hesaplamayı açıklar, veri güvenini puanlar, anomali yakalar, karbon bütçesi alarmı üretir ve azaltım senaryosu oluşturur.</p>
+      <div class="top-actions navbar-actions page-action-strip" aria-label="Hızlı işlemler">
+        <span class="backend-badge offline" id="backendStatusBadge">Backend: Kapalı</span>
+        <button class="btn btn-secondary" id="seedDemoBtn" type="button">Demo Verisi Üret</button>
+        <button class="btn btn-ghost" id="resetBtn" type="button">Sıfırla</button>
+        <button class="btn btn-primary" id="pdfBtn" type="button">PDF Rapor Al</button>
+        <label class="btn btn-ghost csv-upload-btn" for="csvFile">CSV Dosya Seç</label>
+        <input type="file" id="csvFile" accept=".csv" class="visually-hidden" />
+      </div>
+
+<section id="data-entry" class="section-block split-layout screen-block data-entry-section">
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">01 / Veri Girişi</p>
+              <h3 id="recordFormTitle">Karbon Kaydı Ekle</h3>
+            </div>
+          </div>
+          <form id="emissionForm" class="form-grid">
+            <label>
+              Lokasyon
+              <select id="locationInput" required></select>
+            </label>
+            <label>
+              Kategori
+              <select id="categoryInput" required></select>
+            </label>
+            <label>
+              Miktar
+              <input id="amountInput" type="number" min="0" step="0.01" placeholder="Örn: 3200" required />
+            </label>
+            <label>
+              Birim
+              <input id="unitInput" type="text" readonly />
+            </label>
+            <label>
+              Veri Kaynağı
+              <select id="sourceInput" required>
+                <option value="Fatura">Fatura</option>
+                <option value="Sayaç verisi">Sayaç verisi</option>
+                <option value="CSV yükleme">CSV yükleme</option>
+                <option value="Manuel giriş">Manuel giriş</option>
+                <option value="Tahmini veri">Tahmini veri</option>
+              </select>
+            </label>
+            <label>
+              Tarih
+              <input id="dateInput" type="date" required />
+            </label>
+            <label>
+              Belge No / Açıklama
+              <input id="descriptionInput" type="text" placeholder="Örn: EF-2026-04-001" />
+            </label>
+            <div class="form-actions form-submit">
+              <button class="btn btn-primary" id="recordSubmitBtn" type="submit">Emisyonu Hesapla ve Kaydet</button>
+              <button class="btn btn-ghost hidden" id="cancelEditBtn" type="button">Düzenlemeyi İptal Et</button>
+            </div>
+          </form>
         </div>
-        <div class="hero-stats">
-          <div><strong id="heroTotal">0</strong><span>kg CO₂e</span></div>
-          <div><strong id="heroGrade">-</strong><span>Kampüs Notu</span></div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <div>
+              <p class="eyebrow">Şeffaf hesaplama</p>
+              <h3>Kayıtlar</h3>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lokasyon</th>
+                  <th>Kategori</th>
+                  <th>Emisyon</th>
+                  <th>Güven</th>
+                  <th>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody id="recordsTable"></tbody>
+            </table>
+          </div>
         </div>
       </section>
-
-      <section id="dashboard" class="section-block">
+<section id="dashboard" class="section-block screen-block">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">01 / Yönetim paneli</p>
+            <p class="eyebrow">02 / Dashboard</p>
             <h3>Dashboard</h3>
           </div>
           <span class="badge" id="lastUpdateBadge">Henüz veri yok</span>
@@ -126,7 +190,10 @@
           <article class="panel chart-panel">
             <div class="panel-title">
               <h4>Aylık Değişim</h4>
-              <span>Trend</span>
+              <select id="monthlyFilter" class="chart-filter" aria-label="Aylık değişim filtresi">
+                <option value="monthly">Aylık</option>
+                <option value="yearly">Yıllık</option>
+              </select>
             </div>
             <canvas id="monthlyChart"></canvas>
           </article>
@@ -139,100 +206,48 @@
           </article>
         </div>
       </section>
-
-      <section id="data-entry" class="section-block split-layout">
-        <div class="panel">
-          <div class="panel-title">
-            <div>
-              <p class="eyebrow">02 / Veri toplama</p>
-              <h3>Karbon Kaydı Ekle</h3>
-            </div>
-          </div>
-          <form id="emissionForm" class="form-grid">
-            <label>
-              Lokasyon
-              <select id="locationInput" required></select>
-            </label>
-            <label>
-              Kategori
-              <select id="categoryInput" required></select>
-            </label>
-            <label>
-              Miktar
-              <input id="amountInput" type="number" min="0" step="0.01" placeholder="Örn: 3200" required />
-            </label>
-            <label>
-              Birim
-              <input id="unitInput" type="text" readonly />
-            </label>
-            <label>
-              Veri Kaynağı
-              <select id="sourceInput" required>
-                <option value="Fatura">Fatura</option>
-                <option value="Sayaç verisi">Sayaç verisi</option>
-                <option value="CSV yükleme">CSV yükleme</option>
-                <option value="Manuel giriş">Manuel giriş</option>
-                <option value="Tahmini veri">Tahmini veri</option>
-              </select>
-            </label>
-            <label>
-              Kayıt Durumu
-              <select id="statusInput" required>
-                <option value="Onaylandı">Onaylandı</option>
-                <option value="İncelemede">İncelemede</option>
-                <option value="Taslak">Taslak</option>
-                <option value="Reddedildi">Reddedildi</option>
-              </select>
-            </label>
-            <label>
-              Tarih
-              <input id="dateInput" type="date" required />
-            </label>
-            <label>
-              Belge No / Açıklama
-              <input id="descriptionInput" type="text" placeholder="Örn: EF-2026-04-001" />
-            </label>
-            <button class="btn btn-primary form-submit" type="submit">Emisyonu Hesapla ve Kaydet</button>
-          </form>
-        </div>
-
-        <div class="panel">
-          <div class="panel-title">
-            <div>
-              <p class="eyebrow">Şeffaf hesaplama</p>
-              <h3>Son Kayıtlar</h3>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Lokasyon</th>
-                  <th>Kategori</th>
-                  <th>Emisyon</th>
-                  <th>Güven</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="recordsTable"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section id="campus-map" class="section-block">
+<section id="campus-map" class="section-block campus-map-card screen-block">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">03 / Görsel karar desteği</p>
-            <h3>Kampüs Karbon Haritası</h3>
+            <p class="eyebrow">03 / Kampüs Haritası</p>
+            <h3>Dinamik Üniversite Haritası</h3>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
+          <div class="campus-map-header-actions">
             <button class="btn btn-ghost" id="mapFitBtn" style="padding:10px 14px;font-size:13px">🗺️ Tüm Kampüsü Göster</button>
+            <span id="campusLocationCount" class="campus-location-badge">— lokasyon</span>
           </div>
         </div>
+
+        <div class="campus-switcher panel">
+          <div class="campus-switcher-info">
+            <span class="mini-label">Seçili Üniversite</span>
+            <h4 id="currentCampusTitle">Düzce Üniversitesi Konuralp Yerleşkesi</h4>
+            <p id="currentCampusSubtitle"></p>
+          </div>
+          <div class="campus-switcher-controls">
+            <label>
+              Hazır örnek
+              <select id="campusPresetSelect"></select>
+            </label>
+            <label>
+              Başka üniversite
+              <input id="campusSearchInput" type="text" placeholder="Örn: Boğaziçi Üniversitesi İstanbul" />
+            </label>
+            <button class="btn btn-primary" id="campusLoadBtn" type="button">Üniversiteyi Yükle</button>
+          </div>
+
+          <p class="campus-map-status info" id="campusMapStatus">Hazır kampüs profili yüklü. Başka üniversite seçebilir veya arama yapabilirsin.</p>
+        </div>
+
         <div class="map-layout">
           <div id="campusMap"></div>
           <aside class="cm-map-sidebar">
+            <!-- lokasyon seçme kısmı-->
+            <div class="cm-map-panel">
+              <p class="cm-map-panel-title">Lokasyonlar </p>
+              <div id="mapLegendList"></div>
+            </div>
+            <!--kampüs özeti-->
             <div class="cm-map-panel">
               <p class="cm-map-panel-title">Kampüs Özeti</p>
               <div class="cm-map-stats">
@@ -254,6 +269,8 @@
                 </div>
               </div>
             </div>
+
+            <!--
             <section id="carbon-twin" class="carbon-twin-panel map-twin-card twin-neutral">
               <div class="twin-copy">
                 <p class="eyebrow">00 / Dijital Karbon İkiz</p>
@@ -291,39 +308,134 @@
                   <div class="tree-ground"></div>
                 </div>
               </div>
-            </section>
+            </section>-->
 
-            <div class="cm-map-panel">
-              <p class="cm-map-panel-title">Lokasyonlar · Tıkla → Odaklan</p>
-              <div id="mapLegendList"></div>
-            </div>
+
           </aside>
         </div>
       </section>
 
-      <section id="simulator" class="section-block split-layout">
+
+      <section id="simulator" class="section-block split-layout screen-block">
         <div class="panel">
           <div class="panel-title">
             <div>
-              <p class="eyebrow">04 / Geleceği hesapla</p>
+              <p class="eyebrow">04 / Senaryo Simülatörü</p>
               <h3>Senaryo Simülatörü</h3>
             </div>
           </div>
           <form id="scenarioForm" class="form-grid scenario-form">
-            <label>
-              Lokasyon
-              <select id="scenarioLocation"></select>
+            <label class="scenario-combo-field">
+              Lokasyon / Bina
+              <select id="scenarioLocation" class="native-scenario-select" aria-hidden="true" tabindex="-1"></select>
+              <div class="scenario-combo" data-picker="location">
+                <input id="scenarioLocationSearch" type="text" autocomplete="off" placeholder="Fakülte, yemekhane veya kampüs geneli yazın..." />
+                <div id="scenarioLocationSuggestions" class="scenario-suggestions"></div>
+                <div id="scenarioLocationChip" class="selected-chip-area"></div>
+              </div>
             </label>
-            <label>
+            <label class="scenario-combo-field">
               Kategori
-              <select id="scenarioCategory"></select>
+              <select id="scenarioCategory" class="native-scenario-select" aria-hidden="true" tabindex="-1"></select>
+              <div class="scenario-combo" data-picker="category">
+                <input id="scenarioCategorySearch" type="text" autocomplete="off" placeholder="Elektrik, ulaşım, yemekhane yazın..." />
+                <div id="scenarioCategorySuggestions" class="scenario-suggestions"></div>
+                <div id="scenarioCategoryChip" class="selected-chip-area"></div>
+              </div>
             </label>
+            <label class="scenario-combo-field form-wide">
+              Hazır Senaryo
+              <select id="scenarioTemplate" class="native-scenario-select" aria-hidden="true" tabindex="-1"></select>
+              <div class="scenario-combo" data-picker="template">
+                <input id="scenarioTemplateSearch" type="text" autocomplete="off" placeholder="LED, cihaz kapatma, servis, rapor, kağıtsız süreç yazın..." />
+                <div id="scenarioTemplateSuggestions" class="scenario-suggestions wide"></div>
+                <div id="scenarioTemplateChip" class="selected-chip-area"></div>
+              </div>
+              <small class="field-help">İsterseniz yazmaya başlayın, isterseniz alttaki önerilerden tıklayarak seçin.</small>
+              <button type="button" class="btn btn-secondary custom-scenario-toggle" id="customScenarioToggle">+ Yeni Senaryo Ekle</button>
+            </label>
+
+            <div class="custom-scenario-panel form-wide" id="customScenarioPanel" hidden>
+              <div class="panel-title compact-title">
+                <div>
+                  <p class="eyebrow">Özel senaryo</p>
+                  <h4>Sıfırdan senaryo ekle</h4>
+                </div>
+              </div>
+              <p class="muted small-note">Kurumunuza özel bir aksiyon yazın. Kaydedilen senaryo bu tarayıcıda saklanır ve hazır senaryo listesine eklenir.</p>
+
+              <div class="custom-scenario-grid">
+                <label>
+                  Senaryo Adı
+                  <input id="customScenarioTitle" type="text" placeholder="Örn: Fotokopi kullanımını azaltma" />
+                </label>
+                <label>
+                  Kategori
+                  <select id="customScenarioCategory"></select>
+                </label>
+                <label>
+                  Tahmini Azaltım Oranı (%)
+                  <input id="customScenarioReduction" type="number" min="1" max="90" value="6" />
+                </label>
+                <label>
+                  Uygulama Maliyeti
+                  <select id="customScenarioCost">
+                    <option>Düşük</option>
+                    <option>Orta</option>
+                    <option>Yüksek</option>
+                  </select>
+                </label>
+                <label>
+                  Uygulama Zorluğu
+                  <select id="customScenarioDifficulty">
+                    <option>Kolay</option>
+                    <option>Orta</option>
+                    <option>Zor</option>
+                  </select>
+                </label>
+                <label>
+                  Tahmini Süre
+                  <select id="customScenarioDuration">
+                    <option>Hemen / 1 ay</option>
+                    <option>1-2 ay</option>
+                    <option>1-3 ay</option>
+                    <option>3-6 ay</option>
+                    <option>6-12 ay</option>
+                  </select>
+                </label>
+                <label>
+                  Sorumlu Birim
+                  <input id="customScenarioOwner" type="text" placeholder="Örn: İdari Mali İşler" />
+                </label>
+                <label>
+                  Yönetim Onayı
+                  <select id="customScenarioApproval">
+                    <option>Gerekli değil</option>
+                    <option>Birim onayı yeterli</option>
+                    <option>Yönetim onayı önerilir</option>
+                    <option>Yönetim onayı gerekir</option>
+                  </select>
+                </label>
+              </div>
+
+              <label class="form-wide">
+                Kısa Açıklama
+                <input id="customScenarioDescription" type="text" placeholder="Örn: Basılı çıktı yerine dijital onay süreci kullanılması." />
+              </label>
+
+              <div class="custom-scenario-actions">
+                <button type="button" class="btn btn-primary" id="saveCustomScenarioBtn">Senaryoyu Kaydet ve Seç</button>
+                <button type="button" class="btn btn-ghost" id="cancelCustomScenarioBtn">Kapat</button>
+              </div>
+              <div id="customScenarioList" class="custom-scenario-list"></div>
+            </div>
+
             <label>
               Azaltım Oranı (%)
               <input id="reductionInput" type="number" min="1" max="90" value="15" />
             </label>
             <label>
-              Elektrik Birim Maliyeti (TL/kWh)
+              Birim Maliyet (TL)
               <input id="priceInput" type="number" min="0" step="0.01" value="5" />
             </label>
             <button class="btn btn-primary form-submit" type="submit">Senaryoyu Hesapla</button>
@@ -332,59 +444,18 @@
         <div class="panel scenario-result" id="scenarioResult">
           <span class="mini-label">Sonuç</span>
           <h4>Henüz senaryo çalıştırılmadı</h4>
-          <p>Bir lokasyon ve kategori seçerek azaltım etkisini hesaplayın.</p>
+          <p>Lokasyon, kategori ve hazır senaryo seçin. Sağ tarafta CO₂e azaltımı, yeni emisyon ve yaklaşık maliyet etkisi sade şekilde gösterilir.</p>
+          <div class="scenario-mini-help">
+            Önce <strong>Demo Verisi Üret</strong> butonuna basın veya gerçek kayıt girin. Veri yoksa sonuç 0 görünebilir.
+          </div>
         </div>
       </section>
-
-      <section id="alarms" class="section-block">
+<section id="factors" class="section-block screen-block">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">05 / Akıllı uyarılar</p>
-            <h3>Karbon Alarmları ve Anomali Tespiti</h3>
-          </div>
-        </div>
-        <div id="alarmsList" class="alarm-list"></div>
-      </section>
-
-      <section id="actions" class="section-block">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">06 / Karar destek</p>
-            <h3>Aksiyon Planı ve Öncelik Puanı</h3>
-          </div>
-        </div>
-        <div id="actionList" class="action-list"></div>
-      </section>
-
-      <section id="csv" class="section-block split-layout">
-        <div class="panel">
-          <div class="panel-title">
-            <div>
-              <p class="eyebrow">07 / Dağınık Excel çözümü</p>
-              <h3>Akıllı CSV Yükleme</h3>
-            </div>
-          </div>
-          <p class="muted">CSV kolonları farklı isimde olsa bile alanları eşleştirip içe aktarabilirsiniz.</p>
-          <input type="file" id="csvFile" accept=".csv" class="file-input" />
-          <div id="mappingArea" class="mapping-area"></div>
-          <button class="btn btn-primary" id="importCsvBtn" disabled>CSV Verisini İçeri Aktar</button>
-        </div>
-        <div class="panel">
-          <div class="panel-title">
-            <h3>Örnek CSV Formatı</h3>
-          </div>
-          <pre class="code-box">bina,tur,tuketim,tarih,kaynak
-Mühendislik Fakültesi,Elektrik,3200,2026-05-01,Fatura
-Yemekhane,Yemekhane,850,2026-05-02,Manuel giriş
-Otopark,Ulaşım,4200,2026-05-03,CSV yükleme</pre>
-        </div>
-      </section>
-
-      <section id="factors" class="section-block">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">08 / Hesaplama dayanağı</p>
+            <p class="eyebrow">05 / Faktörler</p>
             <h3>Emisyon Faktörü Kütüphanesi</h3>
+            <p class="muted small-note">Ana hesaplama birimi kg CO₂e’dir. Elektrik için Türkiye’ye özgü resmi faktör kullanılır; diğer demo faktörler gerçek uygulamada kurum/veri kaynağına göre güncellenebilir. Petrol eşdeğeri yalnızca enerji karşılaştırması için yardımcı göstergedir; ana karbon raporlama birimi değildir.</p>
           </div>
         </div>
         <div class="panel table-wrap">
@@ -395,7 +466,10 @@ Otopark,Ulaşım,4200,2026-05-03,CSV yükleme</pre>
                 <th>Birim</th>
                 <th>Faktör</th>
                 <th>Scope</th>
-                <th>Demo açıklaması</th>
+                <th>Kaynak</th>
+                <th>Yıl</th>
+                <th>Güven</th>
+                <th>Açıklama</th>
               </tr>
             </thead>
             <tbody id="factorTable"></tbody>
@@ -403,6 +477,54 @@ Otopark,Ulaşım,4200,2026-05-03,CSV yükleme</pre>
         </div>
       </section>
     </main>
+  </div>
+
+
+  <button class="ai-floating-button" id="aiFloatingButton" type="button" aria-label="Yardım Asistanını Aç">
+    <span class="ai-floating-icon">?</span>
+    <span class="ai-floating-text">Yardım</span>
+  </button>
+
+  <div class="ai-floating-panel" id="aiFloatingPanel" aria-live="polite">
+    <div class="ai-floating-header">
+      <div>
+        <span class="mini-label">İdari personel rehberi</span>
+        <h3>Yardım Asistanı</h3>
+      </div>
+      <button class="ai-floating-close" id="aiCloseBtn" type="button" aria-label="Yardım Asistanını Kapat">×</button>
+    </div>
+
+    <div id="aiInsightBox" class="ai-insight-box compact">
+      <span class="mini-label">Kullanım rehberi</span>
+      <h4>Excel yerine dashboard kullanımı</h4>
+      <p>Bu asistan idari personelin veri girişi, CSV aktarımı, dashboard okuma, harita kullanımı ve PDF rapor alma adımlarında yardımcı olur.</p>
+    </div>
+
+    <div class="ai-help-note compact">
+      <strong>Örnek kelimeler</strong>
+      <div class="ai-example-keywords" aria-label="Örnek kelimeler">
+        <span>pdf</span>
+        <span>elektrik</span>
+        <span>fatura</span>
+        <span>dosya yükleme</span>
+        <span>harita</span>
+        <span>rapor</span>
+        <span>emisyon faktörü</span>
+        <span>kg CO₂e</span>
+      </div>
+    </div>
+
+    <div id="aiChatMessages" class="ai-chat-messages floating-chat">
+      <div class="ai-message assistant">
+        Merhaba, ben CarbonMap Yardım Asistanı. Bu paneli Excel yerine nasıl kullanacağınızı adım adım anlatabilirim. Sohbet kutusuna bir kelime veya soru yazmaya başlayınca altta benzer sorular öneririm.
+      </div>
+    </div>
+
+    <div class="ai-chat-input floating-input">
+      <input id="aiQuestionInput" type="text" placeholder="Örn: pdf, fatura, elektrik, dosya yükleme..." />
+      <button type="button" class="btn btn-primary" id="aiAskBtn">Sor</button>
+    </div>
+    <div id="aiInlineSuggestions" class="ai-inline-suggestions"></div>
   </div>
 
   <div class="modal-backdrop" id="modalBackdrop">
