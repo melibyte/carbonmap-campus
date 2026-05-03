@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarbonMap Campus | Rapor Önizleme</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+  body.report-page-body {
+    min-height: 100vh;
+    margin: 0;
+    background:
+      radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 30%),
+      #f4f7f5;
+    color: var(--text, #16231d);
+  }
+
+  .report-page-shell {
+    width: min(1280px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 48px;
+  }
+
+  .report-page-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+    padding: 18px 20px;
+    border: 1px solid rgba(220, 232, 223, 0.95);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 44px rgba(18, 41, 28, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .report-page-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .report-page-brand-mark {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0b6b4b, #19a45b);
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .report-page-brand h1 {
+    margin: 0;
+    font-size: clamp(22px, 2vw, 30px);
+    letter-spacing: -0.04em;
+  }
+
+  .report-page-brand p {
+    margin: 3px 0 0;
+    color: var(--muted, #64746a);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .report-page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .report-page-card {
+    padding: 28px;
+    border: 1px solid rgba(220, 232, 223, 0.95);
+    border-radius: 28px;
+    background: #ffffff;
+    box-shadow: 0 18px 45px rgba(18, 41, 28, 0.09);
+  }
+
+  /* FİLTRELEME ALANI */
+  .report-filter-panel {
+    margin-bottom: 22px;
+    padding: 16px;
+    border: 1px solid #dcebe2;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #f8fdf9, #eef9f0);
+    box-shadow: 0 12px 30px rgba(18, 41, 28, 0.06);
+  }
+
+  .report-filter-header {
+    margin-bottom: 14px;
+  }
+
+  .report-filter-header h2 {
+    margin: 0 0 4px;
+    color: #173f2a;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+
+  .report-filter-header p {
+    margin: 0;
+    color: var(--muted, #64746a);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .report-filter-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .report-filter-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .report-filter-grid::-webkit-scrollbar-track {
+    background: #e8f3ec;
+    border-radius: 999px;
+  }
+
+  .report-filter-grid::-webkit-scrollbar-thumb {
+    background: #9bc9aa;
+    border-radius: 999px;
+  }
+
+  .report-filter-field {
+    min-width: 165px;
+    flex: 0 0 auto;
+  }
+
+  .report-filter-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #244b35;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .report-filter-field select,
+  .report-filter-field input {
+    width: 100%;
+    height: 42px;
+    box-sizing: border-box;
+    border: 1px solid #cfe2d7;
+    border-radius: 13px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #173f2a;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .report-filter-field select:focus,
+  .report-filter-field input:focus {
+    border-color: #19a45b;
+    box-shadow: 0 0 0 3px rgba(25, 164, 91, 0.13);
+  }
+
+  .report-filter-buttons {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+
+  .report-filter-buttons .btn {
+    height: 42px;
+    white-space: nowrap;
+  }
+
+  .report-page-note {
+    margin: 20px 0 0;
+    padding: 14px 16px;
+    border: 1px solid #dcebe2;
+    border-radius: 16px;
+    background: #f8fdf9;
+    color: var(--muted, #64746a);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .report-empty-page {
+    padding: 40px 24px;
+    border: 1px dashed #bed7c5;
+    border-radius: 22px;
+    background: #f8fdf9;
+    text-align: center;
+  }
+
+  .report-empty-page h2 {
+    margin: 0 0 10px;
+    font-size: 28px;
+    letter-spacing: -0.04em;
+  }
+
+  .report-empty-page p {
+    max-width: 720px;
+    margin: 0 auto 18px;
+    color: var(--muted, #64746a);
+    line-height: 1.6;
+  }
+
+  @media print {
+    body.report-page-body {
+      background: #fff !important;
+    }
+
+    .report-page-shell {
+      width: 100%;
+      padding: 0;
+    }
+
+    .report-page-topbar,
+    .report-page-actions,
+    .report-actions,
+    .report-page-note,
+    .report-filter-panel {
+      display: none !important;
+    }
+
+    .report-page-card {
+      box-shadow: none;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .report-table-wrap {
+      overflow: visible;
+    }
+
+    .report-table {
+      min-width: 0;
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .report-filter-grid {
+      flex-wrap: wrap;
+      overflow-x: visible;
+    }
+
+    .report-filter-field {
+      min-width: calc(50% - 8px);
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    .report-filter-buttons {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+
+    .report-filter-buttons .btn {
+      flex: 1;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .report-page-topbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .report-page-actions {
+      justify-content: stretch;
+    }
+
+    .report-page-actions .btn {
+      flex: 1;
+    }
+
+    .report-page-card {
+      padding: 18px;
+    }
+
+    .report-filter-field {
+      min-width: 100%;
+      flex: 1 1 100%;
+    }
+  }
+</style>
+</head>
+<body class="report-page-body">
+  
+  <main class="report-page-shell">
+  <header class="report-page-topbar">
+    <div class="report-page-brand">
+      <div class="report-page-brand-mark">CM</div>
+      <div>
+        <h1>CarbonMap Campus</h1>
+        <p>Rapor önizleme sayfası</p>
+      </div>
+    </div>
+
+    <div class="report-page-actions">
+      <button class="btn btn-ghost" type="button" onclick="goHome()">Ana Sayfaya Dön</button>
+      <button class="btn btn-ghost" type="button" onclick="window.print()">PDF Olarak Yazdır</button>
+      <button class="btn btn-primary" type="button" onclick="downloadExcelFromReportPage()">Excel İndir</button>
+    </div>
+  </header>
+
+  <section class="report-page-card">
+
+    <!-- AÇILAN RAPOR SAYFASI FİLTRELEME ALANI -->
+    <div class="report-filter-panel">
+      <div class="report-filter-header">
+        <div>
+          <h2>Rapor Filtreleri</h2>
+          <p>PDF ve Excel çıktısını indirmeden önce rapor verilerini bu sayfa üzerinde filtreleyebilirsiniz.</p>
+        </div>
+      </div>
+
+      <div class="report-filter-grid">
+        <div class="report-filter-field">
+          <label for="reportLocationFilter">Lokasyon</label>
+          <select id="reportLocationFilter">
+            <option value="all">Tüm Lokasyonlar</option>
+          </select>
+        </div>
+
+        <div class="report-filter-field">
+          <label for="reportCategoryFilter">Kategori</label>
+          <select id="reportCategoryFilter">
+            <option value="all">Tüm Kategoriler</option>
+          </select>
+        </div>
+<!--tarih filtresi-->
+<div class="report-filter-field">
+  <label for="reportDateMode">Tarih Filtresi</label>
+  <select id="reportDateMode" onchange="changeDateFilterMode()">
+    <option value="all">Tüm Tarihler</option>
+    <option value="day">Gün Seç</option>
+    <option value="month">Ay Seç</option>
+    <option value="year">Yıl Seç</option>
+    <option value="range">Tarih Aralığı</option>
+  </select>
+</div>
+
+<div class="report-filter-field" id="dayFilterBox" style="display:none;">
+  <label for="reportDayFilter">Gün</label>
+  <input type="date" id="reportDayFilter">
+</div>
+
+<div class="report-filter-field" id="monthFilterBox" style="display:none;">
+  <label for="reportMonthFilter">Ay</label>
+  <input type="month" id="reportMonthFilter">
+</div>
+
+<div class="report-filter-field" id="yearFilterBox" style="display:none;">
+  <label for="reportYearFilter">Yıl</label>
+  <input type="number" id="reportYearFilter" min="2000" max="2100" placeholder="Örn: 2026">
+</div>
+
+<div class="report-filter-field" id="startDateFilterBox" style="display:none;">
+  <label for="reportStartDate">Başlangıç Tarihi</label>
+  <input type="date" id="reportStartDate">
+</div>
+
+<div class="report-filter-field" id="endDateFilterBox" style="display:none;">
+  <label for="reportEndDate">Bitiş Tarihi</label>
+  <input type="date" id="reportEndDate">
+</div>
+
+        <div class="report-filter-buttons">
+          <button class="btn btn-primary" type="button" onclick="applyReportFilters()">Filtrele</button>
+          <button class="btn btn-ghost" type="button" onclick="clearReportFilters()">Temizle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPORUN GÖSTERİLDİĞİ ALAN -->
+    <div id="reportPageContent" aria-live="polite"></div>
+
+    <p class="report-page-note">
+      Bu sayfa üzerinde seçilen filtrelere göre rapor önizlemesi güncellenir.
+      Raporu kontrol ettikten sonra PDF olarak yazdırabilir veya Excel formatında indirebilirsiniz.
+    </p>
+  </section>
+</main>
+<script>
+  const STORAGE_KEY = "carbonMapReportPreviewPayload";
+  let currentPayload = null;
+  let filteredReportRows = [];
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatNumber(value, decimals = 2) {
+    const number = Number(value || 0);
+    return new Intl.NumberFormat("tr-TR", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(number);
+  }
+
+  function formatKg(value) {
+    return `${formatNumber(value, 2)} kgCO₂e`;
+  }
+
+  function slugify(value) {
+    return String(value || "rapor")
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ğ/g, "g")
+      .replace(/ü/g, "u")
+      .replace(/ş/g, "s")
+      .replace(/ı/g, "i")
+      .replace(/ö/g, "o")
+      .replace(/ç/g, "c")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "rapor";
+  }
+
+  function getPayload() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    } catch (error) {
+      console.warn("Rapor verisi okunamadı:", error);
+      return null;
+    }
+  }
+
+  function renderEmptyReport(message) {
+    const container = document.getElementById("reportPageContent");
+    container.innerHTML = `
+      <div class="report-empty-page">
+        <h2>Rapor oluşturulamadı</h2>
+        <p>${escapeHtml(message || "Ana sayfada rapor filtrelerini seçip tekrar rapor oluşturun.")}</p>
+        <button class="btn btn-primary" type="button" onclick="goHome()">Ana Sayfaya Dön</button>
+      </div>
+    `;
+  }
+
+  function renderReport(payload, rowsToRender) {
+    const container = document.getElementById("reportPageContent");
+
+    if (!payload || !Array.isArray(payload.rows)) {
+      renderEmptyReport("Rapor verisi bulunamadı. Ana sayfadan tekrar Rapor Oluştur butonuna basın.");
+      return;
+    }
+
+    const reportRows = Array.isArray(rowsToRender) ? rowsToRender : payload.rows;
+
+    if (!reportRows.length) {
+      container.innerHTML = `
+        <div class="report-title">
+          <div>
+            <h3>CarbonMap Campus Emisyon Raporu</h3>
+            <p>${escapeHtml(payload.reportTypeText || "Rapor")} · Dönem: ${escapeHtml(payload.periodText || "-")} · ${escapeHtml(payload.campusName || "-")}</p>
+            <small>Gösterilen kayıt: 0 / ${payload.rows.length}</small>
+          </div>
+          <div class="report-meta">
+            <span>Oluşturulma Tarihi</span>
+            <strong>${escapeHtml(payload.generatedDate || "-")}</strong>
+          </div>
+        </div>
+
+        <div class="report-empty">
+          <strong>Seçilen filtrelere ait kayıt bulunamadı.</strong>
+          <p>Farklı lokasyon, kategori veya tarih aralığı seçerek tekrar deneyebilirsiniz.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const rowsHtml = reportRows.map((item) => `
+      <tr>
+        <td>${escapeHtml(item.date || "-")}</td>
+        <td>${escapeHtml(item.university || payload.campusName || "-")}</td>
+        <td>${escapeHtml(item.location || "-")}</td>
+        <td>${escapeHtml(item.category || "-")}</td>
+        <td>${formatNumber(item.amount, 2)} ${escapeHtml(item.unit || "")}</td>
+        <td>${formatNumber(item.factor, 3)}</td>
+        <td><strong>${formatKg(item.totalEmission)}</strong></td>
+      </tr>
+    `).join("");
+
+    container.innerHTML = `
+      <div class="report-title">
+        <div>
+          <h3>CarbonMap Campus Emisyon Raporu</h3>
+          <p>${escapeHtml(payload.reportTypeText || "Rapor")} · Dönem: ${escapeHtml(payload.periodText || "-")} · ${escapeHtml(payload.campusName || "-")}</p>
+          <small>Gösterilen kayıt: ${reportRows.length} / ${payload.rows.length}</small>
+        </div>
+        <div class="report-meta">
+          <span>Oluşturulma Tarihi</span>
+          <strong>${escapeHtml(payload.generatedDate || "-")}</strong>
+        </div>
+      </div>
+
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Üniversite</th>
+              <th>Lokasyon</th>
+              <th>Kategori</th>
+              <th>Tüketim</th>
+              <th>Faktör</th>
+              <th>Emisyon</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+
+      <div class="report-actions">
+        <button class="btn btn-ghost" type="button" onclick="window.print()">PDF Olarak Yazdır</button>
+        <button class="btn btn-primary" type="button" onclick="downloadExcelFromReportPage()">Excel İndir</button>
+      </div>
+    `;
+  }
+
+function fillReportFilterOptions() {
+  if (!currentPayload || !Array.isArray(currentPayload.rows)) return;
+
+  const locationSelect = document.getElementById("reportLocationFilter");
+  const categorySelect = document.getElementById("reportCategoryFilter");
+
+  if (!locationSelect || !categorySelect) return;
+
+  const locations = [...new Set(
+    currentPayload.rows
+      .map((item) => item.location)
+      .filter(Boolean)
+  )];
+
+  const categories = [...new Set(
+    currentPayload.rows
+      .map((item) => item.category)
+      .filter(Boolean)
+  )];
+
+  locationSelect.innerHTML = "";
+  categorySelect.innerHTML = "";
+
+  // Lokasyon seçenekleri
+  const allLocationOption = document.createElement("option");
+  allLocationOption.value = "all";
+  allLocationOption.textContent = "Tüm Lokasyonlar";
+  locationSelect.appendChild(allLocationOption);
+
+  locations.forEach((location) => {
+    const option = document.createElement("option");
+    option.value = location;
+    option.textContent = location;
+    locationSelect.appendChild(option);
+  });
+
+  // Kategori seçenekleri
+  const allCategoryOption = document.createElement("option");
+  allCategoryOption.value = "all";
+  allCategoryOption.textContent = "Tüm Kategoriler";
+  categorySelect.appendChild(allCategoryOption);
+
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = category;
+    categorySelect.appendChild(option);
+  });
+
+  // Ana sayfadan gelen lokasyon seçimi
+  const selectedLocationText = currentPayload.locationText || "";
+
+  if (
+    selectedLocationText &&
+    selectedLocationText !== "Tüm Lokasyonlar" &&
+    locations.includes(selectedLocationText)
+  ) {
+    locationSelect.value = selectedLocationText;
+    locationSelect.disabled = true;
+    locationSelect.title = "Bu rapor ana sayfada seçilen lokasyona göre oluşturuldu.";
+  } else {
+    locationSelect.value = "all";
+    locationSelect.disabled = false;
+    locationSelect.title = "";
+  }
+
+  // Ana sayfadan gelen kategori seçimi
+  let selectedCategoryText =
+    currentPayload.categoryText ||
+    currentPayload.selectedCategory ||
+    currentPayload.category ||
+    "";
+
+  // Eğer payload içinde kategori bilgisi yoksa ama rapordaki tüm kayıtlar tek kategoriye aitse onu seç
+  if (!selectedCategoryText && categories.length === 1) {
+    selectedCategoryText = categories[0];
+  }
+
+  if (
+    selectedCategoryText &&
+    selectedCategoryText !== "Tüm Kategoriler" &&
+    categories.includes(selectedCategoryText)
+  ) {
+    categorySelect.value = selectedCategoryText;
+    categorySelect.disabled = true;
+    categorySelect.title = "Bu rapor ana sayfada seçilen kategoriye göre oluşturuldu.";
+  } else {
+    categorySelect.value = "all";
+    categorySelect.disabled = false;
+    categorySelect.title = "";
+  }
+}
+function changeDateFilterMode() {
+  const mode = document.getElementById("reportDateMode")?.value || "all";
+
+  const dayBox = document.getElementById("dayFilterBox");
+  const monthBox = document.getElementById("monthFilterBox");
+  const yearBox = document.getElementById("yearFilterBox");
+  const startBox = document.getElementById("startDateFilterBox");
+  const endBox = document.getElementById("endDateFilterBox");
+
+  if (dayBox) dayBox.style.display = "none";
+  if (monthBox) monthBox.style.display = "none";
+  if (yearBox) yearBox.style.display = "none";
+  if (startBox) startBox.style.display = "none";
+  if (endBox) endBox.style.display = "none";
+
+  if (mode === "day" && dayBox) {
+    dayBox.style.display = "block";
+  }
+
+  if (mode === "month" && monthBox) {
+    monthBox.style.display = "block";
+  }
+
+  if (mode === "year" && yearBox) {
+    yearBox.style.display = "block";
+  }
+
+  if (mode === "range") {
+    if (startBox) startBox.style.display = "block";
+    if (endBox) endBox.style.display = "block";
+  }
+}
+
+
+
+function applyReportFilters() {
+  if (!currentPayload || !Array.isArray(currentPayload.rows)) return;
+
+  const locationValue = document.getElementById("reportLocationFilter")?.value || "all";
+  const categoryValue = document.getElementById("reportCategoryFilter")?.value || "all";
+
+  const dateMode = document.getElementById("reportDateMode")?.value || "all";
+  const selectedDay = document.getElementById("reportDayFilter")?.value || "";
+  const selectedMonth = document.getElementById("reportMonthFilter")?.value || "";
+  const selectedYear = document.getElementById("reportYearFilter")?.value || "";
+  const startDate = document.getElementById("reportStartDate")?.value || "";
+  const endDate = document.getElementById("reportEndDate")?.value || "";
+
+  filteredReportRows = currentPayload.rows.filter((item) => {
+    const itemDate = item.date || "";
+
+    const locationMatch =
+      locationValue === "all" || item.location === locationValue;
+
+    const categoryMatch =
+      categoryValue === "all" || item.category === categoryValue;
+
+    let dateMatch = true;
+
+    if (dateMode === "day") {
+      dateMatch = !selectedDay || itemDate === selectedDay;
+    }
+
+    if (dateMode === "month") {
+      dateMatch = !selectedMonth || itemDate.slice(0, 7) === selectedMonth;
+    }
+
+    if (dateMode === "year") {
+      dateMatch = !selectedYear || itemDate.slice(0, 4) === selectedYear;
+    }
+
+    if (dateMode === "range") {
+      const startMatch = !startDate || itemDate >= startDate;
+      const endMatch = !endDate || itemDate <= endDate;
+      dateMatch = startMatch && endMatch;
+    }
+
+    return locationMatch && categoryMatch && dateMatch;
+  });
+
+  renderReport(currentPayload, filteredReportRows);
+}
+
+function clearReportFilters() {
+  const locationSelect = document.getElementById("reportLocationFilter");
+  const categorySelect = document.getElementById("reportCategoryFilter");
+
+  const dateModeSelect = document.getElementById("reportDateMode");
+  const dayInput = document.getElementById("reportDayFilter");
+  const monthInput = document.getElementById("reportMonthFilter");
+  const yearInput = document.getElementById("reportYearFilter");
+  const startInput = document.getElementById("reportStartDate");
+  const endInput = document.getElementById("reportEndDate");
+
+  if (locationSelect && !locationSelect.disabled) {
+  locationSelect.value = "all";
+}
+  if (categorySelect) categorySelect.value = "all";
+
+  if (dateModeSelect) dateModeSelect.value = "all";
+  if (dayInput) dayInput.value = "";
+  if (monthInput) monthInput.value = "";
+  if (yearInput) yearInput.value = "";
+  if (startInput) startInput.value = "";
+  if (endInput) endInput.value = "";
+
+  changeDateFilterMode();
+
+  filteredReportRows = currentPayload?.rows || [];
+  renderReport(currentPayload, filteredReportRows);
+}
+
+  function getExportRows() {
+    const sourceRows = Array.isArray(filteredReportRows)
+      ? filteredReportRows
+      : [];
+
+    if (!currentPayload || !Array.isArray(sourceRows)) return [];
+
+    return sourceRows.map((item) => ({
+      "Tarih": item.date || "-",
+      "Üniversite": item.university || currentPayload.campusName || "-",
+      "Lokasyon": item.location || "-",
+      "Kategori": item.category || "-",
+      "Tüketim": `${formatNumber(item.amount, 2)} ${item.unit || ""}`.trim(),
+      "Faktör": formatNumber(item.factor, 3),
+      "Emisyon": formatKg(item.totalEmission)
+    }));
+  }
+
+  function getReportFileName(extension) {
+    const campusName = slugify(currentPayload?.campusName || "kampus").slice(0, 32) || "kampus";
+    const period = String(currentPayload?.periodText || "rapor").replace(/[^0-9-]/g, "") || "rapor";
+    return `CarbonMap_${campusName}_${period}.${extension}`;
+  }
+
+  function downloadExcelFromReportPage() {
+    const rows = getExportRows();
+
+    if (!rows.length) {
+      alert("Excel oluşturmak için raporda kayıt bulunamadı.");
+      return;
+    }
+
+    const reportHeaders = [
+      "Tarih",
+      "Üniversite",
+      "Lokasyon",
+      "Kategori",
+      "Tüketim",
+      "Faktör",
+      "Emisyon"
+    ];
+
+    if (window.XLSX) {
+      const workbook = XLSX.utils.book_new();
+
+      const recordsSheet = XLSX.utils.json_to_sheet(rows, {
+        header: reportHeaders
+      });
+
+      recordsSheet["!cols"] = [
+        { wch: 14 },
+        { wch: 36 },
+        { wch: 24 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 10 },
+        { wch: 18 }
+      ];
+
+      XLSX.utils.book_append_sheet(workbook, recordsSheet, "Rapor Verileri");
+      XLSX.writeFile(workbook, getReportFileName("xlsx"));
+      return;
+    }
+
+    const headers = reportHeaders;
+
+    const csv = [
+      headers.join(";"),
+      ...rows.map((row) =>
+        headers
+          .map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`)
+          .join(";")
+      )
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = getReportFileName("csv");
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  }
+
+  function goHome() {
+    window.location.href = "records.html#reporting-panel";
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    currentPayload = getPayload();
+
+    if (!currentPayload || !Array.isArray(currentPayload.rows)) {
+      renderReport(currentPayload);
+      return;
+    }
+
+    filteredReportRows = currentPayload.rows || [];
+
+    fillReportFilterOptions();
+    renderReport(currentPayload, filteredReportRows);
+  });
+</script>
+</body>
+</html>

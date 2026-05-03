@@ -421,7 +421,7 @@ def serve_index() -> FileResponse:
 
 @app.get("/{file_name}")
 def serve_static_file(file_name: str) -> FileResponse:
-    allowed_files = {"styles.css", "app.js"}
+    allowed_files = {"styles.css", "app.js", "report-preview.html"}
     if file_name not in allowed_files:
         raise HTTPException(status_code=404, detail="Dosya bulunamadı.")
     file_path = ROOT_DIR / file_name

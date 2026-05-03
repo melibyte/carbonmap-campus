@@ -1152,7 +1152,48 @@ let backendCheckFinished = false;
 const customScenarioStorageKey = "carbonmapCampusDemo.customScenarios.v1";
 let customScenarioTemplates = [];
 
-const $ = (selector) => document.querySelector(selector);
+const NULL_CLASS_LIST = {
+  add() {},
+  remove() {},
+  toggle() { return false; },
+  contains() { return false; }
+};
+
+const NULL_ELEMENT = new Proxy({
+  value: "",
+  innerHTML: "",
+  textContent: "",
+  checked: false,
+  disabled: false,
+  hidden: false,
+  style: {},
+  classList: NULL_CLASS_LIST,
+  dataset: {},
+  addEventListener() {},
+  removeEventListener() {},
+  appendChild() {},
+  remove() {},
+  reset() {},
+  focus() {},
+  scrollIntoView() {},
+  querySelector() { return NULL_ELEMENT; },
+  querySelectorAll() { return []; },
+  setAttribute() {},
+  getAttribute() { return null; },
+  valueAsDate: null
+}, {
+  get(target, prop) {
+    if (prop in target) return target[prop];
+    if (prop === "children" || prop === "options") return [];
+    return "";
+  },
+  set(target, prop, value) {
+    target[prop] = value;
+    return true;
+  }
+});
+
+const $ = (selector) => document.querySelector(selector) || NULL_ELEMENT;
 const $$ = (selector) => document.querySelectorAll(selector);
 
 function formatNumber(value, fraction = 0) {
@@ -1193,14 +1234,12 @@ function escapeHtml(value) {
 
 function getRecordFormPayload() {
   const category = $("#categoryInput").value;
-  const statusInput = document.getElementById("statusInput");
-  const existingRecord = editingRecordId ? emissions.find((record) => record.id === editingRecordId) : null;
   return {
     location: $("#locationInput").value,
     category,
     amount: Number($("#amountInput").value),
     source: $("#sourceInput").value,
-    status: statusInput?.value || existingRecord?.status || "Onaylandı",
+    //status: $("#statusInput").value,
     date: $("#dateInput").value,
     description: $("#descriptionInput").value
   };
@@ -1317,12 +1356,18 @@ function getCampusDisplayName() {
 
 function updateCampusText() {
   const name = getCampusDisplayName();
+  const subtitle = currentCampus?.city ? `${currentCampus.city}` : "";
   const titleEl = document.getElementById("currentCampusTitle");
   const subEl = document.getElementById("currentCampusSubtitle");
   const countEl = document.getElementById("campusLocationCount");
+  const sourceEl = document.getElementById("campusDataSource");
   if (titleEl) titleEl.textContent = name;
-  if (subEl) subEl.textContent = "";
+  if (subEl) {
+    subEl.textContent = subtitle;
+    subEl.hidden = !subtitle;
+  }
   if (countEl) countEl.textContent = `${locations.length} lokasyon`;
+  if (sourceEl) sourceEl.textContent = currentCampus?.source || "Dinamik veri";
 }
 
 function setCampusStatus(message, type = "info") {
@@ -2388,6 +2433,8 @@ function renderAll() {
   */
   renderFactorTable();
   renderAiInsight();
+  updateReportPreviewControls();
+  refreshVisibleReportPreview();
 }
 
 function renderDashboard() {
@@ -2440,12 +2487,15 @@ function renderCharts() {
   const categoryData = sumBy(records, "category");
   const locationData = sumBy(records, "location");
   const scopeData = sumBy(records, "scope");
-  const monthlyFilter = document.getElementById("monthlyFilter")?.value || "monthly";
-  const monthlyData = records.reduce((acc, item) => {
-    const dateValue = String(item.date || "");
-    const period = monthlyFilter === "yearly" ? dateValue.slice(0, 4) : dateValue.slice(0, 7);
-    const label = period || "Belirsiz";
-    acc[label] = (acc[label] || 0) + Number(item.totalEmission || 0);
+  const trendPeriod = document.getElementById("trendPeriodSelect")?.value || "monthly";
+  const trendTitle = document.getElementById("monthlyChartTitle");
+  if (trendTitle) trendTitle.textContent = trendPeriod === "yearly" ? "Yıllık Değişim" : "Aylık Değişim";
+  const trendData = records.reduce((acc, item) => {
+    const rawDate = String(item.date || "");
+    const key = trendPeriod === "yearly"
+      ? (rawDate.slice(0, 4) || "Belirsiz")
+      : (rawDate.slice(0, 7) || "Belirsiz");
+    acc[key] = (acc[key] || 0) + Number(item.totalEmission || 0);
     return acc;
   }, {});
 
@@ -2458,49 +2508,21 @@ function renderCharts() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
   });
 
-  const locationLabels = Object.keys(locationData);
-  const wrapAxisLabel = (label, maxLength = 16) => {
-    const words = String(label).split(" ");
-    const lines = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      if (testLine.length <= maxLength) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) lines.push(currentLine);
-        currentLine = word;
-      }
-    });
-
-    if (currentLine) lines.push(currentLine);
-    return lines;
-  };
-
   createOrUpdateChart("locationChart", {
     type: "bar",
     data: {
-      labels: locationLabels.map((label) => wrapAxisLabel(label)),
-      datasets: [{ label: "kg CO₂e", data: Object.values(locationData), backgroundColor: chartColors(locationLabels.length) }]
+      labels: Object.keys(locationData),
+      datasets: [{ label: "kg CO₂e", data: Object.values(locationData), backgroundColor: chartColors(Object.keys(locationData).length) }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { autoSkip: false, font: { size: 9 }, maxRotation: 0, minRotation: 0, padding: 6 } },
-        y: { beginAtZero: true }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
   });
 
-  const sortedMonths = Object.keys(monthlyData).sort();
+  const sortedTrendLabels = Object.keys(trendData).sort();
   createOrUpdateChart("monthlyChart", {
     type: "line",
     data: {
-      labels: sortedMonths,
-      datasets: [{ label: "kg CO₂e", data: sortedMonths.map((month) => monthlyData[month]), borderColor: "#0b6b4b", backgroundColor: "rgba(11,107,75,.14)", fill: true, tension: 0.38 }]
+      labels: sortedTrendLabels,
+      datasets: [{ label: "kg CO₂e", data: sortedTrendLabels.map((label) => trendData[label]), borderColor: "#0b6b4b", backgroundColor: "rgba(11,107,75,.14)", fill: true, tension: 0.38 }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
   });
@@ -2564,8 +2586,7 @@ function startEditRecord(id) {
   $("#amountInput").value = item.amount;
   $("#unitInput").value = item.unit;
   $("#sourceInput").value = item.source;
-  const statusInput = document.getElementById("statusInput");
-  if (statusInput) statusInput.value = item.status;
+  //$("#statusInput").value = item.status;
   $("#dateInput").value = item.date;
   $("#descriptionInput").value = item.description || "";
   updateUnitInput();
@@ -3155,16 +3176,14 @@ Gerçek kullanımda servis kayıtları, araç kilometre bilgileri veya personel 
   {
     title: "Excel dosyasını nasıl yüklerim?",
     keywords: ["excel", "csv", "dosya", "yukle", "toplu", "aktar", "excel yukle", "csv yukle", "dosya yukleme", "toplu veri"],
-    answer: `Excel dosyası doğrudan değil, CSV formatında sisteme aktarılır.
+    answer: `Excel veya CSV dosyası doğrudan sisteme aktarılabilir.
 
 Adımlar:
-1. Excel dosyanızı açın.
-2. “Farklı Kaydet” seçeneğinden CSV formatını seçin.
-3. CarbonMap Campus panelinde “Akıllı CSV” bölümüne gidin.
-4. CSV dosyasını seçin.
-5. Sistem kolon başlıklarını okuyacaktır.
-6. Kolon eşleştirmelerini kontrol edin.
-7. “CSV Verilerini Aktar” butonuna basın.
+1. Üst işlem alanından “CSV / Excel Dosya Seç” butonuna basın.
+2. .xlsx, .xls veya .csv dosyanızı seçin.
+3. Sistem dosyadaki kolon başlıklarını okuyacaktır.
+4. Lokasyon, kategori, miktar ve varsa tarih/veri kaynağı kolonlarını eşleştirin.
+5. “Verileri İçeri Aktar” butonuna basın.
 
 Bu işlem Excel’de tuttuğunuz verileri toplu şekilde sisteme aktarır. Böylece tek tek veri girmek zorunda kalmazsınız.`,
     followUps: [
@@ -3532,14 +3551,14 @@ Rapor boş gelirse önce “Demo Verisi Üret” ya da gerçek veri girişi yap�
     keywords: ["dosya yukleme", "dosya yükleme", "dosya yukleyemiyorum", "dosya yükleyemiyorum", "yukleme sorunu", "yükleme sorunu", "yulkelem", "yüklem", "yuklem", "csv yuklenmiyor", "excel yuklenmiyor", "dosya secilmiyor", "dosya seçilmiyor", "aktar calismiyor", "aktar çalışmıyor", "import sorunu"],
     answer: `Dosya yükleme sorunu yaşıyorsanız şu kontrolleri yapın:
 
-1. Dosyanın CSV formatında olduğundan emin olun. Excel dosyası önce CSV olarak kaydedilmelidir.
-2. Dosya adında çok özel karakterler varsa sadeleştirin. Örneğin: elektrik_nisan_2026.csv
-3. CSV içinde başlık satırı olduğundan emin olun. Örneğin: lokasyon, kategori, miktar, tarih.
-4. Akıllı CSV bölümünde kolon eşleştirmelerini kontrol edin.
-5. “CSV Verilerini Aktar” butonuna bastıktan sonra Son Kayıtlar tablosunu kontrol edin.
+1. Dosyanın .csv, .xlsx veya .xls formatında olduğundan emin olun.
+2. Dosya adında çok özel karakterler varsa sadeleştirin. Örneğin: elektrik_nisan_2026.xlsx
+3. CSV/Excel içinde başlık satırı olduğundan emin olun. Örneğin: lokasyon, kategori, miktar, tarih.
+4. Açılan kolon eşleştirme penceresinde alanları kontrol edin.
+5. “Verileri İçeri Aktar” butonuna bastıktan sonra Kayıtlar tablosunu kontrol edin.
 6. Hâlâ çalışmıyorsa sayfayı yenileyip tekrar deneyin.
 
-Not: Fatura resmi, PDF ya da Word dosyası bu alandan içe aktarılmaz; bu alan karbon kayıtlarını CSV olarak almak içindir.`,
+Not: Fatura resmi, PDF ya da Word dosyası bu alandan içe aktarılmaz; bu alan karbon kayıtlarını CSV/Excel tablosu olarak almak içindir.`,
     followUps: [
       "Excel dosyasını nasıl yüklerim?",
       "CSV kolon eşleştirme nedir?",
@@ -4135,7 +4154,6 @@ function setupAiAssistant() {
     floatingPanel.classList.add("open");
     if (floatingButton) {
       floatingButton.setAttribute("aria-label", "Yardım Asistanını Kapat");
-      floatingButton.classList.add("is-open");
     }
     window.setTimeout(() => {
       if (input) input.focus();
@@ -4147,7 +4165,6 @@ function setupAiAssistant() {
     floatingPanel.classList.remove("open");
     if (floatingButton) {
       floatingButton.setAttribute("aria-label", "Yardım Asistanını Aç");
-      floatingButton.classList.remove("is-open");
     }
   }
 
@@ -4399,45 +4416,241 @@ function handleScenario(event) {
 }
 
 
+function getImportFileType(file) {
+  const name = String(file?.name || "").toLowerCase();
+  if (name.endsWith(".csv")) return "csv";
+  if (name.endsWith(".xlsx") || name.endsWith(".xls")) return "excel";
+  return "unknown";
+}
+
+function removeBlankImportRows(rows) {
+  return (rows || []).filter((row) => {
+    return Object.values(row || {}).some((value) => String(value ?? "").trim() !== "");
+  });
+}
+
 function handleCsvUpload(event) {
   const file = event.target.files?.[0];
   if (!file) return;
-  if (typeof Papa === "undefined") {
-    showToast("PapaParse kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
+
+  const fileType = getImportFileType(file);
+
+  if (fileType === "csv") {
+    readCsvImportFile(file);
     return;
   }
 
+  if (fileType === "excel") {
+    readExcelImportFile(file);
+    return;
+  }
+
+  showToast("Lütfen CSV, XLSX veya XLS formatında bir dosya seçin.");
+  event.target.value = "";
+}
+
+function makeUniqueImportHeader(header, index, seen = {}) {
+  const raw = String(header ?? "").replace(/^\uFEFF/, "").trim();
+  let name = raw || `Kolon ${index + 1}`;
+  if (seen[name]) {
+    seen[name] += 1;
+    name = `${name} ${seen[name]}`;
+  } else {
+    seen[name] = 1;
+  }
+  return name;
+}
+
+function normalizeImportRow(row) {
+  const normalized = {};
+  Object.entries(row || {}).forEach(([key, value]) => {
+    const cleanKey = String(key ?? "").replace(/^\uFEFF/, "").trim();
+    if (!cleanKey) return;
+    normalized[cleanKey] = typeof value === "string" ? value.trim() : value;
+  });
+  return normalized;
+}
+
+function getImportHeaders(rows, fallbackFields = []) {
+  const headers = [];
+  const add = (header) => {
+    const clean = String(header ?? "").replace(/^\uFEFF/, "").trim();
+    if (clean && !headers.includes(clean)) headers.push(clean);
+  };
+  (fallbackFields || []).forEach(add);
+  (rows || []).forEach((row) => Object.keys(row || {}).forEach(add));
+  return headers;
+}
+
+function detectCsvDelimiter(text) {
+  const sample = String(text || "").split(/\r?\n/).find((line) => line.trim()) || "";
+  const delimiters = [",", ";", "\t", "|"];
+  let best = ",";
+  let bestCount = -1;
+  delimiters.forEach((delimiter) => {
+    const count = splitCsvLine(sample, delimiter).length - 1;
+    if (count > bestCount) {
+      best = delimiter;
+      bestCount = count;
+    }
+  });
+  return best;
+}
+
+function splitCsvLine(line, delimiter) {
+  const cells = [];
+  let current = "";
+  let inQuotes = false;
+  const text = String(line ?? "");
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      i += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === delimiter && !inQuotes) {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseCsvTextFallback(text) {
+  const normalizedText = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = normalizedText.split("\n").filter((line) => line.trim() !== "");
+  if (!lines.length) return { rows: [], headers: [] };
+
+  const delimiter = detectCsvDelimiter(normalizedText);
+  const seen = {};
+  const headers = splitCsvLine(lines[0], delimiter).map((header, index) => makeUniqueImportHeader(header, index, seen));
+  const rows = lines.slice(1).map((line) => {
+    const cells = splitCsvLine(line, delimiter);
+    return headers.reduce((row, header, index) => {
+      row[header] = cells[index] ?? "";
+      return row;
+    }, {});
+  });
+
+  return { rows: removeBlankImportRows(rows).map(normalizeImportRow), headers };
+}
+
+function finalizeImportRows(rows, fallbackFields, fileLabel) {
+  parsedCsvRows = removeBlankImportRows((rows || []).map(normalizeImportRow));
+  csvHeaders = getImportHeaders(parsedCsvRows, fallbackFields);
+
+  if (!parsedCsvRows.length || !csvHeaders.length) {
+    showToast(`${fileLabel} dosyasında aktarılacak satır bulunamadı.`);
+    return;
+  }
+
+  renderMappingArea(fileLabel);
+  showToast(`${parsedCsvRows.length} ${fileLabel} satırı okundu. Kolonları eşleştirin.`);
+}
+
+async function readCsvImportFile(file) {
+  if (typeof Papa === "undefined") {
+    try {
+      const text = await file.text();
+      const parsed = parseCsvTextFallback(text);
+      finalizeImportRows(parsed.rows, parsed.headers, "CSV");
+    } catch (error) {
+      console.warn("CSV dosyası okunamadı:", error);
+      showToast("CSV dosyası okunamadı. Dosya biçimini kontrol edin.");
+    }
+    return;
+  }
+
+  const seenHeaders = {};
   Papa.parse(file, {
     header: true,
-    skipEmptyLines: true,
+    skipEmptyLines: "greedy",
+    delimiter: "",
+    transformHeader: (header, index) => makeUniqueImportHeader(header, index, seenHeaders),
+    transform: (value) => typeof value === "string" ? value.trim() : value,
     complete: (result) => {
-      parsedCsvRows = result.data;
-      csvHeaders = result.meta.fields || [];
-      renderMappingArea();
-      showToast(`${parsedCsvRows.length} CSV satırı okundu. Kolonları eşleştirin.`);
+      if (result.errors?.length) {
+        console.warn("CSV okuma uyarıları:", result.errors);
+      }
+      finalizeImportRows(result.data, result.meta.fields || [], "CSV");
     },
-    error: () => showToast("CSV okunamadı.")
+    error: () => showToast("CSV dosyası okunamadı. Dosya biçimini kontrol edin.")
   });
+}
+
+async function readExcelImportFile(file) {
+  if (typeof XLSX === "undefined") {
+    showToast("Excel dosyası okumak için XLSX kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edin.");
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+    const firstSheetName = workbook.SheetNames[0];
+
+    if (!firstSheetName) {
+      showToast("Excel dosyasında okunabilir sayfa bulunamadı.");
+      return;
+    }
+
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+      defval: "",
+      raw: false
+    });
+
+    parsedCsvRows = removeBlankImportRows(rows);
+    csvHeaders = parsedCsvRows.length ? Object.keys(parsedCsvRows[0]) : [];
+
+    if (!parsedCsvRows.length || !csvHeaders.length) {
+      showToast("Excel dosyasında aktarılacak satır bulunamadı.");
+      return;
+    }
+
+    renderMappingArea("Excel");
+    showToast(`${parsedCsvRows.length} Excel satırı okundu. Kolonları eşleştirin.`);
+  } catch (error) {
+    console.warn("Excel dosyası okunamadı:", error);
+    showToast("Excel dosyası okunamadı. Dosya biçimini kontrol edin.");
+  }
 }
 
 function guessField(header) {
   const clean = slugify(header);
   if (["bina", "lokasyon", "location", "yer", "kampus"].some((item) => clean.includes(item))) return "location";
-  if (["tur", "kategori", "category", "kaynak"].some((item) => clean.includes(item))) return "category";
-  if (["tuketim", "miktar", "amount", "deger", "adet"].some((item) => clean.includes(item))) return "amount";
+  if (["tur", "kategori", "category", "emisyonkaynak", "karbonkaynak"].some((item) => clean.includes(item))) return "category";
+  if (["tuketim", "miktar", "amount", "deger", "adet", "sarfiyat"].some((item) => clean.includes(item))) return "amount";
   if (["tarih", "date", "donem"].some((item) => clean.includes(item))) return "date";
-  if (["verikaynagi", "kaynak", "source"].some((item) => clean.includes(item))) return "source";
+  if (["verikaynagi", "verikaynak", "kaynak", "source"].some((item) => clean.includes(item))) return "source";
+  if (["aciklama", "belgeno", "belge", "description", "not"].some((item) => clean.includes(item))) return "description";
   return "ignore";
 }
 
-function renderMappingArea() {
+function renderMappingArea(fileLabel = "CSV / Excel") {
   const targetFields = [
     ["ignore", "Yok say"],
     ["location", "Lokasyon"],
     ["category", "Kategori"],
     ["amount", "Miktar"],
     ["date", "Tarih"],
-    ["source", "Veri Kaynağı"]
+    ["source", "Veri Kaynağı"],
+    ["description", "Belge No / Açıklama"]
   ];
 
   const rowsHtml = csvHeaders.map((header) => {
@@ -4458,12 +4671,12 @@ function renderMappingArea() {
     const modalContent = document.getElementById("modalContent");
     if (!modalContent) return;
     modalContent.innerHTML = `
-      <p class="eyebrow">CSV içe aktarma</p>
-      <h2>CSV Kolon Eşleştirme</h2>
-      <p class="muted">Seçtiğiniz dosyadaki kolonları sistem alanlarıyla eşleştirip içeri aktarın.</p>
+      <p class="eyebrow">CSV / Excel içe aktarma</p>
+      <h2>Dosya Kolon Eşleştirme</h2>
+      <p class="muted">Seçtiğiniz CSV veya Excel dosyasındaki kolonları sistem alanlarıyla eşleştirip içeri aktarın.</p>
       <div id="mappingArea" class="mapping-area"></div>
       <div class="csv-modal-actions">
-        <button class="btn btn-primary" id="importCsvBtn" type="button">CSV Verisini İçeri Aktar</button>
+        <button class="btn btn-primary" id="importCsvBtn" type="button">Verileri İçeri Aktar</button>
       </div>
     `;
     document.getElementById("modalBackdrop")?.classList.add("show");
@@ -4474,6 +4687,96 @@ function renderMappingArea() {
 
   if (mappingArea) mappingArea.innerHTML = rowsHtml;
   if (importButton) importButton.disabled = !parsedCsvRows.length;
+}
+
+function parseImportAmount(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  let text = String(value ?? "").trim();
+  if (!text) return 0;
+
+  text = text
+    .replace(/\s+/g, "")
+    .replace(/₺|TL|kgCO₂e|kgCO2e|kWh|km|öğün|adet|kişi/gi, "")
+    .replace(/[^0-9,.\-]/g, "");
+
+  if (!text || text === "-" || text === "," || text === ".") return 0;
+
+  const hasComma = text.includes(",");
+  const hasDot = text.includes(".");
+
+  if (hasComma && hasDot) {
+    const lastComma = text.lastIndexOf(",");
+    const lastDot = text.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      text = text.replace(/\./g, "").replace(",", ".");
+    } else {
+      text = text.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    const parts = text.split(",");
+    const last = parts[parts.length - 1];
+    text = parts.length > 2 || last.length === 3
+      ? parts.join("")
+      : text.replace(",", ".");
+  } else if (hasDot) {
+    const parts = text.split(".");
+    const last = parts[parts.length - 1];
+    if (parts.length > 2 || last.length === 3) {
+      text = parts.join("");
+    }
+  }
+
+  const number = Number(text);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function normalizeImportDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const text = String(value ?? "").trim();
+  if (!text) return new Date().toISOString().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+
+  const isoLikeMatch = text.match(/^(\d{4})[./-](\d{1,2})(?:[./-](\d{1,2}))?$/);
+  if (isoLikeMatch) {
+    const [, year, month, day = "1"] = isoLikeMatch;
+    return `${year.padStart(4, "0")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const monthYearMatch = text.match(/^(\d{1,2})[./-](\d{4})$/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    return `${year}-${month.padStart(2, "0")}-01`;
+  }
+
+  const dotOrSlashMatch = text.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2,4})$/);
+  if (dotOrSlashMatch) {
+    let [, day, month, year] = dotOrSlashMatch;
+    if (year.length === 2) year = `20${year}`;
+    return `${year.padStart(4, "0")}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const slashUsMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (slashUsMatch) {
+    let [, first, second, year] = slashUsMatch;
+    if (year.length === 2) year = `20${year}`;
+    return `${year.padStart(4, "0")}-${first.padStart(2, "0")}-${second.padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  return new Date().toISOString().slice(0, 10);
 }
 
 async function importCsvRows() {
@@ -4492,12 +4795,15 @@ async function importCsvRows() {
   parsedCsvRows.forEach((row) => {
     const location = normalizeLocation(row[mapping.location]);
     const category = normalizeCategory(row[mapping.category]);
-    const amount = Number(String(row[mapping.amount] || "0").replace(",", "."));
-    const sourceRaw = mapping.source ? row[mapping.source] : "CSV yükleme";
+    const amount = parseImportAmount(row[mapping.amount]);
+    const sourceRaw = mapping.source ? String(row[mapping.source] || "").trim() : "CSV yükleme";
     const source = dataSourceScores[sourceRaw] ? sourceRaw : "CSV yükleme";
-    const date = mapping.date && row[mapping.date] ? row[mapping.date] : new Date().toISOString().slice(0, 10);
+    const date = mapping.date && row[mapping.date] ? normalizeImportDate(row[mapping.date]) : new Date().toISOString().slice(0, 10);
+    const description = mapping.description && row[mapping.description]
+      ? String(row[mapping.description]).trim()
+      : "CSV / Excel içe aktarma";
     if (!Number.isFinite(amount) || amount <= 0) return;
-    preparedRecords.push({ location, category, amount, source, status: "İncelemede", date, description: "CSV içe aktarma" });
+    preparedRecords.push({ location, category, amount, source, status: "İncelemede", date, description });
   });
 
   if (backendEnabled) {
@@ -4515,12 +4821,12 @@ async function importCsvRows() {
       document.getElementById("csvFile") && (document.getElementById("csvFile").value = "");
       document.getElementById("importCsvBtn") && (document.getElementById("importCsvBtn").disabled = true);
       closeModal();
-      showToast(`${result.inserted} CSV kaydı backend veritabanına aktarıldı.`);
+      showToast(`${result.inserted} kayıt backend veritabanına aktarıldı.`);
       return;
     } catch (error) {
       backendEnabled = false;
       setBackendStatus(false, "Backend isteği başarısız oldu: localStorage moduna geçildi.");
-      showToast("Backend yanıt vermedi, CSV kayıtları tarayıcıya yazılıyor.");
+      showToast("Backend yanıt vermedi, kayıtlar tarayıcıya yazılıyor.");
     }
   }
 
@@ -4538,7 +4844,503 @@ async function importCsvRows() {
   document.getElementById("csvFile") && (document.getElementById("csvFile").value = "");
   document.getElementById("importCsvBtn") && (document.getElementById("importCsvBtn").disabled = true);
   closeModal();
-  showToast(`${imported} CSV kaydı içeri aktarıldı.`);
+  showToast(`${imported} kayıt içeri aktarıldı.`);
+}
+
+
+function getLatestReportDate(records = emissions) {
+  const sortedDates = records
+    .map((item) => String(item.date || ""))
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    .sort();
+  return sortedDates.at(-1) || new Date().toISOString().slice(0, 10);
+}
+
+function updateReportUniversityInfo() {
+  const select = document.getElementById("reportUniversity");
+  if (!select) return;
+  select.innerHTML = `<option>${escapeHtml(getCampusDisplayName())}</option>`;
+}
+
+function updateReportLocationOptions() {
+  const select = document.getElementById("reportLocation");
+  if (!select) return;
+
+  const previousValue = select.value || "all";
+  const names = new Set();
+  locations.forEach((location) => location?.name && names.add(location.name));
+  emissions.forEach((record) => record?.location && names.add(record.location));
+
+  const options = [`<option value="all">Tüm Lokasyonlar</option>`]
+    .concat([...names].sort((a, b) => a.localeCompare(b, "tr-TR")).map((name) => {
+      return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+    }));
+
+  select.innerHTML = options.join("");
+  select.value = [...names].includes(previousValue) ? previousValue : "all";
+}
+
+function updateReportDefaultPeriod(force = false) {
+  const monthInput = document.getElementById("reportMonth");
+  const yearInput = document.getElementById("reportYear");
+  const latestDate = getLatestReportDate(emissions);
+  const latestMonth = latestDate.slice(0, 7);
+  const latestYear = latestDate.slice(0, 4);
+
+  if (monthInput && (force || !monthInput.value || monthInput.dataset.autoValue === "true")) {
+    monthInput.value = latestMonth;
+    monthInput.dataset.autoValue = "true";
+  }
+
+  if (yearInput && (force || !yearInput.value || yearInput.dataset.autoValue === "true")) {
+    yearInput.value = latestYear;
+    yearInput.dataset.autoValue = "true";
+  }
+}
+
+function toggleReportDateInputs() {
+  const type = document.getElementById("reportType")?.value || "monthly";
+  const monthGroup = document.getElementById("reportMonthGroup");
+  const yearGroup = document.getElementById("reportYearGroup");
+
+  monthGroup?.classList.toggle("hidden", type !== "monthly");
+  yearGroup?.classList.toggle("hidden", type !== "yearly");
+}
+
+function updateReportPreviewControls() {
+  if (!document.getElementById("reporting-panel")) return;
+  updateReportUniversityInfo();
+  updateReportLocationOptions();
+  updateReportDefaultPeriod();
+  toggleReportDateInputs();
+}
+
+function getReportSelection() {
+  const reportType = document.getElementById("reportType")?.value || "monthly";
+  const location = document.getElementById("reportLocation")?.value || "all";
+  const month = document.getElementById("reportMonth")?.value || getLatestReportDate(emissions).slice(0, 7);
+  const year = document.getElementById("reportYear")?.value || getLatestReportDate(emissions).slice(0, 4);
+
+  return { reportType, location, month, year };
+}
+
+function filterRecordsForReport(records = getActiveRecords()) {
+  const { reportType, location, month, year } = getReportSelection();
+
+  return records.filter((item) => {
+    const locationMatch = location === "all" || item.location === location;
+    const date = String(item.date || "");
+    const dateMatch = reportType === "monthly" ? date.startsWith(month) : date.startsWith(year);
+    return locationMatch && dateMatch;
+  });
+}
+
+function getReportPeriodText() {
+  const { reportType, month, year } = getReportSelection();
+  return reportType === "monthly" ? month : year;
+}
+
+function getReportTypeText() {
+  return getReportSelection().reportType === "monthly" ? "Aylık Rapor" : "Yıllık Rapor";
+}
+
+function getTopReportItem(records, fieldName) {
+  const totals = records.reduce((acc, item) => {
+    const key = item[fieldName] || "Belirsiz";
+    acc[key] = (acc[key] || 0) + Number(item.totalEmission || 0);
+    return acc;
+  }, {});
+  const [name, value] = getTopEntry(totals);
+  return { name: name || "-", value: Number(value || 0) };
+}
+
+function setReportBadge(text) {
+  const badge = document.getElementById("reportRecordBadge");
+  if (badge) badge.textContent = text;
+}
+
+
+function scrollToReportPanel() {
+  const panel = document.getElementById("reporting-panel");
+
+  if (IS_MULTI_PAGE_APP && !panel) {
+    window.location.href = "records.html#reporting-panel";
+    return;
+  }
+
+  if (!panel) return;
+
+  if (!IS_MULTI_PAGE_APP && typeof window.setAppPage === "function") {
+    window.setAppPage("#data-entry", false);
+  }
+
+  window.setTimeout(() => {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    setReportBadge("Filtreleri seçip raporu yeni sayfada açın");
+  }, 80);
+}
+
+
+function buildReportPreviewPayload() {
+  updateReportPreviewControls();
+  const selection = getReportSelection();
+  const filteredRecords = filterRecordsForReport();
+  const periodText = getReportPeriodText();
+  const reportTypeText = getReportTypeText();
+  const totalEmission = filteredRecords.reduce((sum, item) => sum + Number(item.totalEmission || 0), 0);
+  const totalTon = totalEmission / 1000;
+  const topCategory = getTopReportItem(filteredRecords, "category");
+  const topLocation = getTopReportItem(filteredRecords, "location");
+  const confidence = getWeightedConfidence(filteredRecords);
+  const sortedRows = [...filteredRecords].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const locationText = selection.location === "all" ? "Tüm Lokasyonlar" : selection.location;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    generatedDate: new Date().toLocaleDateString("tr-TR"),
+    campusName: getCampusDisplayName(),
+    reportType: selection.reportType,
+    reportTypeText,
+    periodText,
+    location: selection.location,
+    locationText,
+    totalRecord: filteredRecords.length,
+    totalEmissionKg: Number(totalEmission.toFixed(2)),
+    totalEmissionTon: Number(totalTon.toFixed(3)),
+    topCategory: {
+      name: topCategory.name || "-",
+      value: Number(topCategory.value || 0)
+    },
+    topLocation: {
+      name: topLocation.name || "-",
+      value: Number(topLocation.value || 0)
+    },
+    confidence: Number(confidence || 0),
+    rows: sortedRows.map((item) => ({
+      date: item.date || "-",
+      university: getCampusDisplayName(),
+      location: item.location || "-",
+      category: item.category || "-",
+      amount: Number(item.amount || 0),
+      unit: item.unit || "-",
+      factor: Number(item.factor || 0),
+      scope: item.scope || "-",
+      source: item.source || "-",
+      status: item.status || "-",
+      confidence: Number(item.confidence || 0),
+      totalEmission: Number(item.totalEmission || 0),
+      description: item.description || "-"
+    }))
+  };
+}
+
+async function openReportPreview() {
+  const reportWindow = window.open("about:blank", "_blank");
+  if (!reportWindow) {
+    showToast("Rapor sayfası açılamadı. Tarayıcı açılır pencereyi engellemiş olabilir.");
+    return;
+  }
+
+  reportWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="tr">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Rapor hazırlanıyor...</title>
+        <style>
+          body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f7f5; color: #16231d; font-family: Arial, sans-serif; }
+          .box { width: min(440px, calc(100vw - 32px)); padding: 28px; border-radius: 22px; background: #fff; box-shadow: 0 18px 45px rgba(18, 41, 28, .12); text-align: center; }
+          .logo { width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 14px; border-radius: 18px; background: #dcfce7; color: #0b6b4b; font-weight: 900; }
+          h1 { margin: 0 0 8px; font-size: 24px; }
+          p { margin: 0; color: #64746a; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="box">
+          <div class="logo">CM</div>
+          <h1>Rapor hazırlanıyor...</h1>
+          <p>Seçtiğiniz filtrelere göre rapor yeni sayfada açılıyor.</p>
+        </div>
+      </body>
+    </html>
+  `);
+  reportWindow.document.close();
+
+  try {
+    if (backendEnabled) {
+      await syncFromBackend();
+    }
+  } catch (error) {
+    console.warn("Rapor öncesi backend senkronizasyonu tamamlanamadı:", error);
+  }
+
+  const payload = buildReportPreviewPayload();
+  localStorage.setItem("carbonMapReportPreviewPayload", JSON.stringify(payload));
+  setReportBadge(`${payload.totalRecord} kayıt · ${formatNumber(payload.totalEmissionTon, 3)} tonCO₂e`);
+  reportWindow.location.href = "report-preview.html";
+  showToast("Rapor yeni sayfada açıldı.");
+}
+
+function previewReport(options = {}) {
+  updateReportPreviewControls();
+  const preview = document.getElementById("reportPreview");
+  if (!preview) return;
+
+  const filteredRecords = filterRecordsForReport();
+  const periodText = getReportPeriodText();
+  const reportTypeText = getReportTypeText();
+  const totalEmission = filteredRecords.reduce((sum, item) => sum + Number(item.totalEmission || 0), 0);
+  const totalTon = totalEmission / 1000;
+  const topCategory = getTopReportItem(filteredRecords, "category");
+  const topLocation = getTopReportItem(filteredRecords, "location");
+  const confidence = getWeightedConfidence(filteredRecords);
+  const generatedDate = new Date().toLocaleDateString("tr-TR");
+
+  if (!filteredRecords.length) {
+    preview.innerHTML = `
+      <div class="report-empty">
+        <strong>Seçilen filtrelere ait rapor kaydı bulunamadı.</strong>
+        <p>${escapeHtml(getCampusDisplayName())} için ${escapeHtml(reportTypeText)} / ${escapeHtml(periodText)} döneminde aktif kayıt yok. Farklı dönem seçebilir, demo verisi üretebilir veya yeni veri girişi yapabilirsiniz.</p>
+      </div>
+    `;
+    preview.classList.remove("hidden");
+    setReportBadge("0 kayıt");
+    if (options.scroll) preview.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  const sortedRows = [...filteredRecords].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const tableRows = sortedRows.map((item) => `
+    <tr>
+      <td>${escapeHtml(item.date || "-")}</td>
+      <td>${escapeHtml(getCampusDisplayName())}</td>
+      <td>${escapeHtml(item.location || "-")}</td>
+      <td>${escapeHtml(item.category || "-")}</td>
+      <td>${formatNumber(item.amount, 2)} ${escapeHtml(item.unit || "")}</td>
+      <td>${formatNumber(item.factor, 3)}</td>
+      <td><strong>${formatKg(item.totalEmission)}</strong></td>
+    </tr>
+  `).join("");
+
+  preview.innerHTML = `
+    <div class="report-title">
+      <div>
+        <h3>CarbonMap Campus Emisyon Raporu</h3>
+        <p>${escapeHtml(reportTypeText)} · Dönem: ${escapeHtml(periodText)} · ${escapeHtml(getCampusDisplayName())}</p>
+      </div>
+      <div class="report-meta">
+        <span>Oluşturulma Tarihi</span>
+        <strong>${generatedDate}</strong>
+      </div>
+    </div>
+
+    <div class="report-summary-grid">
+      <article class="report-card">
+        <div class="report-card-icon">📋</div>
+        <div><span>Toplam Kayıt</span><strong>${filteredRecords.length}</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">CO₂</div>
+        <div><span>Toplam Emisyon</span><strong>${formatNumber(totalTon, 3)} tonCO₂e</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">📊</div>
+        <div><span>En Yüksek Kategori</span><strong>${escapeHtml(topCategory.name)}</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">📍</div>
+        <div><span>En Yüksek Lokasyon</span><strong>${escapeHtml(topLocation.name)}</strong></div>
+      </article>
+    </div>
+
+    <div class="report-summary-grid">
+      <article class="report-card">
+        <div class="report-card-icon">✅</div>
+        <div><span>Veri Güven Skoru</span><strong>%${formatNumber(confidence, 0)}</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">🏫</div>
+        <div><span>Rapor Kapsamı</span><strong>${escapeHtml(getReportSelection().location === "all" ? "Tüm Lokasyonlar" : getReportSelection().location)}</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">🧾</div>
+        <div><span>Hesaba Dahil</span><strong>Onaylı + İncelemede</strong></div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-icon">📅</div>
+        <div><span>Dönem</span><strong>${escapeHtml(periodText)}</strong></div>
+      </article>
+    </div>
+
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Üniversite</th>
+            <th>Lokasyon</th>
+            <th>Kategori</th>
+            <th>Tüketim</th>
+            <th>Faktör</th>
+            <th>Emisyon</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+
+    <div class="report-actions">
+      <button class="btn btn-ghost" type="button" onclick="printReportPreview()">PDF Olarak Yazdır</button>
+      <button class="btn btn-primary" type="button" onclick="downloadExcelReport()">Excel İndir</button>
+    </div>
+  `;
+
+  preview.classList.remove("hidden");
+  setReportBadge(`${filteredRecords.length} kayıt · ${formatNumber(totalTon, 3)} tonCO₂e`);
+  if (options.scroll) preview.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function refreshVisibleReportPreview() {
+  const preview = document.getElementById("reportPreview");
+  if (!preview || preview.classList.contains("hidden") || !preview.innerHTML.trim()) return;
+  previewReport({ scroll: false });
+}
+
+function printReportPreview() {
+  const preview = document.getElementById("reportPreview");
+  if (!preview || preview.classList.contains("hidden") || !preview.innerHTML.trim()) {
+    showToast("Önce web rapor önizlemesini oluşturun.");
+    return;
+  }
+
+  const printWindow = window.open("", "_blank", "width=1100,height=850");
+  if (!printWindow) {
+    showToast("Tarayıcı açılır pencereyi engelledi. Tarayıcı izinlerini kontrol edin.");
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+      <meta charset="UTF-8" />
+      <title>CarbonMap Campus Rapor</title>
+      <style>
+        body { margin: 0; padding: 28px; background: #f4f7f5; color: #16231d; font-family: Arial, sans-serif; }
+        .report-preview { background: #fff; border-radius: 18px; padding: 24px; border: 1px solid #dce8df; }
+        .report-title { display: flex; justify-content: space-between; gap: 18px; border-bottom: 1px solid #e6efe8; padding-bottom: 14px; margin-bottom: 18px; }
+        .report-title h3 { margin: 0; font-size: 25px; }
+        .report-title p, .report-meta { color: #637369; }
+        .report-meta { text-align: right; font-size: 13px; }
+        .report-meta strong { display: block; margin-top: 5px; color: #16231d; font-size: 16px; }
+        .report-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+        .report-card { display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; border: 1px solid #dcebe2; border-radius: 14px; padding: 12px; background: #f8fdf9; }
+        .report-card-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: #dcfce7; color: #0b6b4b; font-weight: 800; }
+        .report-card span { display: block; color: #637369; font-size: 11px; font-weight: 700; }
+        .report-card strong { color: #0b6b4b; font-size: 18px; }
+        .report-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .report-table th, .report-table td { padding: 9px 10px; border-bottom: 1px solid #edf3ef; text-align: left; }
+        .report-table th { background: #f1f6f3; }
+        .report-actions { display: none !important; }
+        @media print { body { background: #fff; padding: 0; } .report-preview { border: 0; } }
+      </style>
+    </head>
+    <body>
+      <div class="report-preview">${preview.innerHTML}</div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => printWindow.print(), 250);
+}
+
+function getReportRowsForExport() {
+  return filterRecordsForReport()
+    .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
+    .map((item) => ({
+      "Tarih": item.date || "-",
+      "Üniversite": getCampusDisplayName(),
+      "Lokasyon": item.location || "-",
+      "Kategori": item.category || "-",
+      "Tüketim": `${formatNumber(item.amount, 2)} ${item.unit || ""}`.trim(),
+      "Faktör": formatNumber(item.factor, 3),
+      "Emisyon": formatKg(item.totalEmission)
+    }));
+}
+
+function getSafeReportFileName(extension) {
+  const campusName = slugify(getCampusDisplayName()).slice(0, 32) || "kampus";
+  const period = getReportPeriodText().replace(/[^0-9-]/g, "");
+  return `CarbonMap_${campusName}_${period}.${extension}`;
+}
+
+function downloadExcelReport() {
+  const rows = getReportRowsForExport();
+  if (!rows.length) {
+    showToast("Excel oluşturmak için seçili filtrelerde kayıt bulunamadı.");
+    return;
+  }
+
+  const totalEmission = filterRecordsForReport().reduce((sum, item) => sum + Number(item.totalEmission || 0), 0);
+  const reportHeaders = ["Tarih", "Üniversite", "Lokasyon", "Kategori", "Tüketim", "Faktör", "Emisyon"];
+  const summaryRows = [
+    {
+      "Rapor Türü": getReportTypeText(),
+      "Dönem": getReportPeriodText(),
+      "Üniversite": getCampusDisplayName(),
+      "Lokasyon": getReportSelection().location === "all" ? "Tüm Lokasyonlar" : getReportSelection().location,
+      "Toplam Kayıt": rows.length,
+      "Toplam kgCO₂e": Number(totalEmission.toFixed(2)),
+      "Toplam tonCO₂e": Number((totalEmission / 1000).toFixed(3))
+    }
+  ];
+
+  if (window.XLSX) {
+    const workbook = XLSX.utils.book_new();
+    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
+    const recordsSheet = XLSX.utils.json_to_sheet(rows, { header: reportHeaders });
+    summarySheet["!cols"] = [{ wch: 16 }, { wch: 12 }, { wch: 36 }, { wch: 22 }, { wch: 14 }, { wch: 18 }, { wch: 18 }];
+    recordsSheet["!cols"] = [{ wch: 14 }, { wch: 36 }, { wch: 24 }, { wch: 16 }, { wch: 18 }, { wch: 10 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Özet");
+    XLSX.utils.book_append_sheet(workbook, recordsSheet, "Kayıtlar");
+    XLSX.writeFile(workbook, getSafeReportFileName("xlsx"));
+    showToast("Excel raporu oluşturuldu.");
+    return;
+  }
+
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(";"), ...rows.map((row) => headers.map((header) => `"${String(row[header] ?? "").replace(/"/g, '""')}"`).join(";"))].join("\n");
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = getSafeReportFileName("csv");
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("XLSX kütüphanesi yüklenemediği için CSV raporu indirildi.");
+}
+
+function setupReportPreviewControls() {
+  const panel = document.getElementById("reporting-panel");
+  if (!panel) return;
+
+  ["reportMonth", "reportYear"].forEach((id) => {
+    const input = document.getElementById(id);
+    input?.addEventListener("input", () => {
+      input.dataset.autoValue = "false";
+    });
+  });
+
+  document.getElementById("reportType")?.addEventListener("change", () => {
+    toggleReportDateInputs();
+  });
+
+  document.getElementById("reportPreviewBtn")?.addEventListener("click", openReportPreview);
+  updateReportDefaultPeriod(true);
+  updateReportPreviewControls();
 }
 
 async function generatePdfReport() {
@@ -4930,46 +5732,236 @@ async function resetData() {
   showToast("Veriler sıfırlandı.");
 }
 
-function setupNavObserver() {
-  const links = [...$$('.nav-link')].filter((link) => link.getAttribute('href')?.startsWith('#'));
-  const sections = [...new Set(links.map((link) => link.getAttribute('href')))]
-    .map((href) => document.querySelector(href))
-    .filter(Boolean);
+const AUTH_KEY = "carbonMapCampusLoggedIn";
+const DEFAULT_APP_PAGE = "#campus-map";
+const PAGE_ROUTES = {
+  "#campus-map": ["campus-map"],
+  "#data-entry": ["data-entry", "dashboard"],
+  "#simulator": ["simulator", "factors"]
+};
+const PAGE_ALIASES = {
+  "#dashboard": "#data-entry",
+  "#reporting-panel": "#data-entry",
+  "#factors": "#simulator"
+};
 
-  let ticking = false;
+const IS_MULTI_PAGE_APP = document.body?.dataset?.appMode === "multipage";
+const MULTI_PAGE_LOGIN = "index.html";
+const MULTI_PAGE_DEFAULT = "campus-map.html";
 
-  const setActive = () => {
-    const navbarHeight = document.querySelector('.fixed-navbar')?.offsetHeight || document.querySelector('.top-navbar')?.offsetHeight || 0;
-    const markerLine = navbarHeight + 70;
-    let currentId = sections[0]?.id;
+function getCurrentMultiPageFile() {
+  return window.location.pathname.split("/").pop() || "index.html";
+}
 
-    sections.forEach((section) => {
-      const rect = section.getBoundingClientRect();
-      if (rect.top <= markerLine) currentId = section.id;
+function setStaticActiveNav() {
+  if (!IS_MULTI_PAGE_APP) return;
+  const currentFile = getCurrentMultiPageFile();
+  document.querySelectorAll(".nav-link").forEach((link) => {
+    const href = link.getAttribute("href") || "";
+    if (href.startsWith("#") || href === "") return;
+    const linkFile = href.split("#")[0];
+    link.classList.toggle("active", linkFile === currentFile && !link.dataset.logout);
+  });
+}
+
+function isAuthenticated() {
+  return localStorage.getItem(AUTH_KEY) === "true";
+}
+
+function refreshVisibleComponents() {
+  Object.values(charts || {}).forEach((chart) => chart?.resize?.());
+  if (leafletMap) {
+    window.setTimeout(() => leafletMap.invalidateSize(), 160);
+  }
+}
+
+function normalizeAppHash(hash) {
+  const rawHash = hash || DEFAULT_APP_PAGE;
+  if (PAGE_ALIASES[rawHash]) return PAGE_ALIASES[rawHash];
+  if (PAGE_ROUTES[rawHash]) return rawHash;
+  return DEFAULT_APP_PAGE;
+}
+
+function setAppPage(hash = DEFAULT_APP_PAGE, shouldScroll = true) {
+  if (!isAuthenticated()) {
+    applyAuthState(false);
+    return;
+  }
+
+  const requestedHash = hash || window.location.hash || DEFAULT_APP_PAGE;
+  const pageHash = normalizeAppHash(requestedHash);
+  const visibleIds = PAGE_ROUTES[pageHash] || PAGE_ROUTES[DEFAULT_APP_PAGE];
+  const allPageIds = new Set(Object.values(PAGE_ROUTES).flat());
+
+  allPageIds.forEach((id) => {
+    const section = document.getElementById(id);
+    if (section) section.hidden = !visibleIds.includes(id);
+  });
+
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    const href = link.getAttribute('href');
+    const normalizedHref = normalizeAppHash(href);
+    link.classList.toggle('active', normalizedHref === pageHash && href !== '#logout');
+  });
+
+  if (window.location.hash !== pageHash && requestedHash !== '#reporting-panel') {
+    history.replaceState(null, '', pageHash);
+  }
+
+  if (shouldScroll) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (pageHash === '#campus-map') {
+    window.setTimeout(() => {
+      if (leafletMap) leafletMap.invalidateSize();
+      fitMapToCampus();
+    }, 220);
+  }
+
+  refreshVisibleComponents();
+}
+
+function applyAuthState(authenticated) {
+  document.body.classList.toggle('is-authenticated', authenticated);
+  document.body.classList.toggle('is-unauthenticated', !authenticated);
+
+  if (IS_MULTI_PAGE_APP) {
+    if (!authenticated && getCurrentMultiPageFile() !== MULTI_PAGE_LOGIN) {
+      window.location.href = MULTI_PAGE_LOGIN;
+      return;
+    }
+    setStaticActiveNav();
+    window.setTimeout(refreshVisibleComponents, 240);
+    return;
+  }
+
+  if (authenticated) {
+    const nextHash = normalizeAppHash(window.location.hash || DEFAULT_APP_PAGE);
+    if (!window.location.hash || window.location.hash === '#login' || window.location.hash === '#logout') {
+      history.replaceState(null, '', nextHash);
+    }
+    setAppPage(nextHash, false);
+    window.setTimeout(refreshVisibleComponents, 240);
+  } else {
+    ["campus-map", "data-entry", "dashboard", "simulator", "factors"].forEach((id) => {
+      const section = document.getElementById(id);
+      if (section) section.hidden = true;
     });
+    const aiPanel = document.getElementById('aiFloatingPanel');
+    if (aiPanel) aiPanel.classList.remove('open');
+  }
+}
 
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
-      currentId = sections.at(-1)?.id || currentId;
+function handleLogin(event) {
+  event?.preventDefault?.();
+  const email = document.getElementById('loginEmail')?.value?.trim();
+  const password = document.getElementById('loginPassword')?.value?.trim();
+
+  if (!email || !password) {
+    showToast('Giriş yapmak için e-posta ve şifre alanlarını doldurun.');
+    return;
+  }
+
+  localStorage.setItem(AUTH_KEY, 'true');
+  applyAuthState(true);
+  if (IS_MULTI_PAGE_APP) {
+    window.location.href = MULTI_PAGE_DEFAULT;
+    return;
+  }
+  history.replaceState(null, '', DEFAULT_APP_PAGE);
+  setAppPage(DEFAULT_APP_PAGE, false);
+  showToast('Giriş başarılı. Kampüs haritası açıldı.');
+}
+
+function handleDemoLogin() {
+  const emailInput = document.getElementById('loginEmail');
+  const passwordInput = document.getElementById('loginPassword');
+  if (emailInput) emailInput.value = 'idari.personel@carbonmap.edu.tr';
+  if (passwordInput) passwordInput.value = 'demo123';
+  localStorage.setItem(AUTH_KEY, 'true');
+  applyAuthState(true);
+  if (IS_MULTI_PAGE_APP) {
+    window.location.href = MULTI_PAGE_DEFAULT;
+    return;
+  }
+  history.replaceState(null, '', DEFAULT_APP_PAGE);
+  setAppPage(DEFAULT_APP_PAGE, false);
+  showToast('Demo girişi yapıldı.');
+}
+
+function logoutUser() {
+  localStorage.removeItem(AUTH_KEY);
+  if (IS_MULTI_PAGE_APP) {
+    window.location.href = MULTI_PAGE_LOGIN;
+    return;
+  }
+  history.replaceState(null, '', '#login');
+  applyAuthState(false);
+  showToast('Oturum kapatıldı.');
+}
+
+function setupAuthFlow() {
+  document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
+  document.getElementById('demoLoginBtn')?.addEventListener('click', handleDemoLogin);
+  document.querySelectorAll('[data-logout="true"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      logoutUser();
+    });
+  });
+
+  applyAuthState(isAuthenticated());
+}
+
+function setupNavObserver() {
+  const pageLinks = [...document.querySelectorAll('.nav-link')]
+    .filter((link) => link.getAttribute('href')?.startsWith('#'));
+
+  pageLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const href = link.getAttribute('href');
+      if (href === '#logout') return;
+      event.preventDefault();
+      if (!isAuthenticated()) {
+        applyAuthState(false);
+        return;
+      }
+      history.pushState(null, '', normalizeAppHash(href));
+      setAppPage(href);
+    });
+  });
+
+  window.addEventListener('hashchange', () => {
+    const rawHash = window.location.hash;
+    if (rawHash === '#logout') {
+      logoutUser();
+      return;
     }
 
-    links.forEach((link) => {
-      link.classList.toggle('active', link.getAttribute('href') === `#${currentId}`);
-    });
+    if (rawHash === '#reporting-panel') {
+      setAppPage('#data-entry', false);
+      window.setTimeout(() => document.getElementById('reporting-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      return;
+    }
 
-    ticking = false;
-  };
+    setAppPage(rawHash || DEFAULT_APP_PAGE);
+  });
 
-  const requestSetActive = () => {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(setActive);
-  };
+  if (IS_MULTI_PAGE_APP) {
+    setStaticActiveNav();
+    return;
+  }
 
-  window.addEventListener('scroll', requestSetActive, { passive: true });
-  window.addEventListener('resize', requestSetActive);
-  window.addEventListener('hashchange', requestSetActive);
-  setActive();
+  if (isAuthenticated()) {
+    setAppPage(window.location.hash || DEFAULT_APP_PAGE, false);
+    if (window.location.hash === '#reporting-panel') {
+      window.setTimeout(() => document.getElementById('reporting-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 140);
+    }
+  }
 }
+
+window.setAppPage = setAppPage;
 
 function setupResponsiveRefresh() {
   let resizeTimer = null;
@@ -5000,17 +5992,18 @@ if (sidebarToggle) {
     document.body.classList.toggle("sidebar-closed");
   });
 };
+  setupAuthFlow();
   initializeCampusControls();
   populateSelects();
   loadRecords();
   renderAll();
+  setupReportPreviewControls();
   setupNavObserver();
   setupResponsiveRefresh();
   setBackendStatus(false, "Backend kontrol ediliyor...");
   connectBackend();
   $("#dateInput").valueAsDate = new Date();
   $("#categoryInput").addEventListener("change", updateUnitInput);
-  document.getElementById("monthlyFilter")?.addEventListener("change", renderCharts);
   document.getElementById("scenarioCategory")?.addEventListener("change", populateScenarioTemplates);
   document.getElementById("scenarioTemplate")?.addEventListener("change", updateScenarioInputs);
   $("#emissionForm").addEventListener("submit", handleFormSubmit);
@@ -5022,12 +6015,13 @@ if (sidebarToggle) {
   $("#scenarioForm").addEventListener("submit", handleScenario);
   $("#seedDemoBtn").addEventListener("click", seedDemoData);
   $("#resetBtn").addEventListener("click", resetData);
-  $("#pdfBtn").addEventListener("click", generatePdfReport);
+  $("#pdfBtn").addEventListener("click", scrollToReportPanel);
   $("#modalClose").addEventListener("click", closeModal);
   $("#modalBackdrop").addEventListener("click", (event) => {
     if (event.target.id === "modalBackdrop") closeModal();
   });
   document.getElementById("csvFile")?.addEventListener("change", handleCsvUpload);
+  document.getElementById("trendPeriodSelect")?.addEventListener("change", renderCharts);
   document.getElementById("importCsvBtn")?.addEventListener("click", importCsvRows);
   document.getElementById("mapFitBtn")?.addEventListener("click", fitMapToCampus);
   setupScenarioSearchPickers();
