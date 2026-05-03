@@ -335,5 +335,10 @@ E-posta: idari.personel@carbonmap.edu.tr
 | GET | `/api/dashboard` | Dashboard özet verilerini döndürür |
 | POST | `/api/scenario` | Senaryo azaltım hesabı yapar |
 
+---
+
+<p align="center">
+  © 2026 CarbonMap Campus - LogicWaves Takımı. Tüm hakları saklıdır.
+</p>
 
 
