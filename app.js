@@ -1193,12 +1193,14 @@ function escapeHtml(value) {
 
 function getRecordFormPayload() {
   const category = $("#categoryInput").value;
+  const statusInput = document.getElementById("statusInput");
+  const existingRecord = editingRecordId ? emissions.find((record) => record.id === editingRecordId) : null;
   return {
     location: $("#locationInput").value,
     category,
     amount: Number($("#amountInput").value),
     source: $("#sourceInput").value,
-    status: $("#statusInput").value,
+    status: statusInput?.value || existingRecord?.status || "Onaylandı",
     date: $("#dateInput").value,
     description: $("#descriptionInput").value
   };
@@ -1315,15 +1317,12 @@ function getCampusDisplayName() {
 
 function updateCampusText() {
   const name = getCampusDisplayName();
-  const subtitle = currentCampus?.city ? `${currentCampus.city} · ${currentCampus.source || "Dinamik veri"}` : (currentCampus?.source || "Dinamik veri");
   const titleEl = document.getElementById("currentCampusTitle");
   const subEl = document.getElementById("currentCampusSubtitle");
   const countEl = document.getElementById("campusLocationCount");
-  const sourceEl = document.getElementById("campusDataSource");
   if (titleEl) titleEl.textContent = name;
-  if (subEl) subEl.textContent = subtitle;
+  if (subEl) subEl.textContent = "";
   if (countEl) countEl.textContent = `${locations.length} lokasyon`;
-  if (sourceEl) sourceEl.textContent = currentCampus?.source || "Dinamik veri";
 }
 
 function setCampusStatus(message, type = "info") {
@@ -2441,9 +2440,12 @@ function renderCharts() {
   const categoryData = sumBy(records, "category");
   const locationData = sumBy(records, "location");
   const scopeData = sumBy(records, "scope");
+  const monthlyFilter = document.getElementById("monthlyFilter")?.value || "monthly";
   const monthlyData = records.reduce((acc, item) => {
-    const month = String(item.date || "").slice(0, 7) || "Belirsiz";
-    acc[month] = (acc[month] || 0) + Number(item.totalEmission || 0);
+    const dateValue = String(item.date || "");
+    const period = monthlyFilter === "yearly" ? dateValue.slice(0, 4) : dateValue.slice(0, 7);
+    const label = period || "Belirsiz";
+    acc[label] = (acc[label] || 0) + Number(item.totalEmission || 0);
     return acc;
   }, {});
 
@@ -2456,13 +2458,41 @@ function renderCharts() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }
   });
 
+  const locationLabels = Object.keys(locationData);
+  const wrapAxisLabel = (label, maxLength = 16) => {
+    const words = String(label).split(" ");
+    const lines = [];
+    let currentLine = "";
+
+    words.forEach((word) => {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      if (testLine.length <= maxLength) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  };
+
   createOrUpdateChart("locationChart", {
     type: "bar",
     data: {
-      labels: Object.keys(locationData),
-      datasets: [{ label: "kg CO₂e", data: Object.values(locationData), backgroundColor: chartColors(Object.keys(locationData).length) }]
+      labels: locationLabels.map((label) => wrapAxisLabel(label)),
+      datasets: [{ label: "kg CO₂e", data: Object.values(locationData), backgroundColor: chartColors(locationLabels.length) }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { autoSkip: false, font: { size: 9 }, maxRotation: 0, minRotation: 0, padding: 6 } },
+        y: { beginAtZero: true }
+      }
+    }
   });
 
   const sortedMonths = Object.keys(monthlyData).sort();
@@ -2534,7 +2564,8 @@ function startEditRecord(id) {
   $("#amountInput").value = item.amount;
   $("#unitInput").value = item.unit;
   $("#sourceInput").value = item.source;
-  $("#statusInput").value = item.status;
+  const statusInput = document.getElementById("statusInput");
+  if (statusInput) statusInput.value = item.status;
   $("#dateInput").value = item.date;
   $("#descriptionInput").value = item.description || "";
   updateUnitInput();
@@ -2843,7 +2874,6 @@ function openExplanation(id) {
       <p><strong>Scope:</strong> ${item.scope}</p>
       <code>${formatNumber(item.amount, 2)} ${item.unit} × ${item.factor} = ${formatKg(item.totalEmission)}</code>
     </div>
-    <p class="muted">Bu panel jüriye hesaplamanın kara kutu olmadığını gösterir. Gerçek kullanımda faktör kaynakları resmi veri setleriyle güncellenebilir.</p>
   `;
   $("#modalBackdrop").classList.add("show");
 }
@@ -4105,6 +4135,7 @@ function setupAiAssistant() {
     floatingPanel.classList.add("open");
     if (floatingButton) {
       floatingButton.setAttribute("aria-label", "Yardım Asistanını Kapat");
+      floatingButton.classList.add("is-open");
     }
     window.setTimeout(() => {
       if (input) input.focus();
@@ -4116,6 +4147,7 @@ function setupAiAssistant() {
     floatingPanel.classList.remove("open");
     if (floatingButton) {
       floatingButton.setAttribute("aria-label", "Yardım Asistanını Aç");
+      floatingButton.classList.remove("is-open");
     }
   }
 
@@ -4978,6 +5010,7 @@ if (sidebarToggle) {
   connectBackend();
   $("#dateInput").valueAsDate = new Date();
   $("#categoryInput").addEventListener("change", updateUnitInput);
+  document.getElementById("monthlyFilter")?.addEventListener("change", renderCharts);
   document.getElementById("scenarioCategory")?.addEventListener("change", populateScenarioTemplates);
   document.getElementById("scenarioTemplate")?.addEventListener("change", updateScenarioInputs);
   $("#emissionForm").addEventListener("submit", handleFormSubmit);

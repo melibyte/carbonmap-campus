@@ -2631,7 +2631,7 @@ body.sidebar-closed .topbar.fixed-navbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 6px;
   overflow-x: auto;
   padding: 3px 0;
   scrollbar-width: thin;
@@ -2639,20 +2639,32 @@ body.sidebar-closed .topbar.fixed-navbar {
 
 .top-nav .nav-link {
   flex: 0 0 auto;
-  min-height: 38px !important;
+  min-height: 32px !important;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  padding: 9px 13px !important;
+  padding: 7px 10px !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.86) !important;
   border: 1px solid rgba(220, 232, 223, 0.98) !important;
   color: #53665b !important;
-  font-size: 14px !important;
+  font-size: 12px !important;
   line-height: 1 !important;
   font-weight: 850 !important;
   text-decoration: none;
   box-shadow: none !important;
+}
+
+.chart-filter {
+  width: auto;
+  min-width: 104px;
+  min-height: 36px;
+  padding: 7px 34px 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  background-color: #fff;
 }
 
 .top-nav .nav-link:hover,
@@ -2716,8 +2728,8 @@ body.sidebar-closed .topbar.fixed-navbar {
   }
 
   .top-nav .nav-link {
-    font-size: 12px !important;
-    padding: 8px 10px !important;
+    font-size: 11px !important;
+    padding: 6px 8px !important;
   }
 
   .main-content {
@@ -3514,5 +3526,226 @@ body.sidebar-closed .topbar.fixed-navbar {
 
   .ai-floating-text {
     display: none;
+  }
+}
+
+/* Harita seçim alanı ve yardım paneli küçük düzenlemeleri */
+#currentCampusSubtitle {
+  display: none !important;
+}
+
+.campus-switcher {
+  grid-template-columns: minmax(230px, 0.65fr) minmax(520px, 1.95fr) minmax(138px, max-content) !important;
+  column-gap: 14px !important;
+}
+
+.campus-switcher-controls {
+  grid-template-columns: minmax(150px, 0.85fr) minmax(230px, 1.15fr) max-content !important;
+  column-gap: 10px !important;
+  justify-self: start;
+  width: 100%;
+}
+
+#campusLoadBtn {
+  justify-self: start;
+  padding: 10px 16px;
+  font-size: 13px;
+  min-width: 166px;
+}
+
+.campus-switcher-meta {
+  justify-self: end;
+  align-self: center;
+  padding-left: 6px;
+}
+
+.ai-floating-button.is-open {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+.ai-floating-panel {
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 124px));
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.ai-floating-header {
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.ai-insight-box.compact,
+.ai-help-note.compact {
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+.ai-insight-box.compact h4 {
+  font-size: 16px;
+  margin: 3px 0 5px;
+}
+
+.ai-insight-box.compact p,
+.ai-help-note.compact p {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ai-help-note.compact strong {
+  margin-bottom: 8px;
+}
+
+.ai-help-note.compact .ai-example-keywords {
+  gap: 7px;
+}
+
+.ai-help-note.compact .ai-example-keywords span {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.ai-chat-messages.floating-chat {
+  height: 210px;
+  min-height: 160px;
+  flex: 0 1 210px;
+}
+
+.ai-floating-panel .ai-message {
+  max-width: 96%;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-chat-input.floating-input {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ai-chat-input.floating-input input {
+  min-width: 0;
+}
+
+@media (max-width: 1120px) {
+  .campus-switcher,
+  .campus-switcher-controls {
+    grid-template-columns: 1fr !important;
+  }
+
+  .campus-switcher-meta {
+    justify-self: start;
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-floating-panel {
+    right: 16px;
+    bottom: 78px;
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 100px);
+  }
+
+  .ai-chat-messages.floating-chat {
+    height: 180px;
+    min-height: 150px;
+  }
+}
+
+
+/* Son düzenlemeler: kampüs sayaç konumu ve yardım paneli taşma düzeltmesi */
+.campus-map-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.campus-location-badge {
+  display: inline-flex;
+  width: max-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf8f1;
+  color: #0b6b4b;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ai-floating-button {
+  z-index: 1500;
+}
+
+.ai-floating-panel {
+  top: 96px;
+  bottom: 96px;
+  z-index: 1499;
+  max-height: none;
+}
+
+@media (max-width: 640px) {
+  .campus-map-header-actions {
+    align-items: stretch;
+  }
+
+  .campus-location-badge {
+    align-self: flex-end;
+  }
+
+  .ai-floating-panel {
+    top: 84px;
+    right: 16px;
+    bottom: 78px;
+    width: calc(100vw - 32px);
+    max-height: none;
+  }
+}
+
+
+/* Son düzenleme: başlık puntoları ve lokasyon grafiği etiket sığdırma */
+.eyebrow,
+.mini-label {
+  font-size: 13px !important;
+}
+
+/* === Logo güncellemesi === */
+.brand--sidebar {
+  display: block;
+}
+
+.brand-logo {
+  display: block;
+  height: auto;
+}
+
+.sidebar-brand-logo {
+  width: min(90px, 100%);
+  max-width: 100%;
+}
+
+.navbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.navbar-brand-logo {
+  width: clamp(75px, 8.5vw, 130px);
+  max-width: 100%;
+}
+
+@media (max-width: 760px) {
+  .sidebar-brand-logo {
+    width: min(78px, 100%);
+  }
+
+  .navbar-brand-logo {
+    width: min(83px, 22vw);
   }
 }

@@ -16,20 +16,16 @@
 
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">CM</div>
-        <div>
-          <h1>CarbonMap</h1>
-          <p>Campus Demo</p>
-        </div>
+      <div class="brand brand--sidebar">
+        <img src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" class="brand-logo sidebar-brand-logo" />
       </div>
 
       <nav class="nav-list">
-        <a href="#data-entry" class="nav-link active">1. Veri Toplama</a>
+        <a href="#data-entry" class="nav-link active">1. Veri Girişi</a>
         <a href="#dashboard" class="nav-link">2. Dashboard</a>
-        <a href="#campus-map" class="nav-link">3. Görsel Karar Desteği</a>
-        <a href="#simulator" class="nav-link">4. Geleceği Hesapla</a>
-        <a href="#factors" class="nav-link">5. Hesaplama Dayanağı</a>
+        <a href="#campus-map" class="nav-link">3. Kampüs Haritası</a>
+        <a href="#simulator" class="nav-link">4. Senaryo Simülatörü</a>
+        <a href="#factors" class="nav-link">5. Faktörler</a>
       </nav>
     </aside>
 
@@ -37,10 +33,9 @@
       <header class="topbar fixed-navbar">
         <div class="navbar-main-row">
           <div class="navbar-brandline">
-            <span class="navbar-logo-dot">CM</span>
-            <div>
+            <div class="navbar-brand-text">
               <p class="eyebrow">İdari Personel Paneli</p>
-              <h2>CarbonMap Campus</h2>
+              <img src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" class="brand-logo navbar-brand-logo" />
             </div>
           </div>
           <nav class="top-nav" aria-label="Sayfa bölümleri">
@@ -66,7 +61,7 @@
         <div class="panel">
           <div class="panel-title">
             <div>
-              <p class="eyebrow">01 / Veri toplama</p>
+              <p class="eyebrow">01 / Veri Girişi</p>
               <h3 id="recordFormTitle">Karbon Kaydı Ekle</h3>
             </div>
           </div>
@@ -95,15 +90,6 @@
                 <option value="CSV yükleme">CSV yükleme</option>
                 <option value="Manuel giriş">Manuel giriş</option>
                 <option value="Tahmini veri">Tahmini veri</option>
-              </select>
-            </label>
-            <label>
-              Kayıt Durumu
-              <select id="statusInput" required>
-                <option value="Onaylandı">Onaylandı</option>
-                <option value="İncelemede">İncelemede</option>
-                <option value="Taslak">Taslak</option>
-                <option value="Reddedildi">Reddedildi</option>
               </select>
             </label>
             <label>
@@ -204,7 +190,10 @@
           <article class="panel chart-panel">
             <div class="panel-title">
               <h4>Aylık Değişim</h4>
-              <span>Trend</span>
+              <select id="monthlyFilter" class="chart-filter" aria-label="Aylık değişim filtresi">
+                <option value="monthly">Aylık</option>
+                <option value="yearly">Yıllık</option>
+              </select>
             </div>
             <canvas id="monthlyChart"></canvas>
           </article>
@@ -220,12 +209,12 @@
 <section id="campus-map" class="section-block campus-map-card screen-block">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">03 / Görsel karar desteği</p>
+            <p class="eyebrow">03 / Kampüs Haritası</p>
             <h3>Dinamik Üniversite Haritası</h3>
-            <p class="section-note">Harita artık sadece Düzce Üniversitesi'ne bağlı değil; seçilen veya aranan üniversiteye göre kampüs lokasyonları yeniden yüklenir.</p>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
+          <div class="campus-map-header-actions">
             <button class="btn btn-ghost" id="mapFitBtn" style="padding:10px 14px;font-size:13px">🗺️ Tüm Kampüsü Göster</button>
+            <span id="campusLocationCount" class="campus-location-badge">— lokasyon</span>
           </div>
         </div>
 
@@ -233,7 +222,7 @@
           <div class="campus-switcher-info">
             <span class="mini-label">Seçili Üniversite</span>
             <h4 id="currentCampusTitle">Düzce Üniversitesi Konuralp Yerleşkesi</h4>
-            <p id="currentCampusSubtitle">Hazır kampüs verisi</p>
+            <p id="currentCampusSubtitle"></p>
           </div>
           <div class="campus-switcher-controls">
             <label>
@@ -246,10 +235,7 @@
             </label>
             <button class="btn btn-primary" id="campusLoadBtn" type="button">Üniversiteyi Yükle</button>
           </div>
-          <div class="campus-switcher-meta">
-            <span id="campusLocationCount">— lokasyon</span>
-            <span id="campusDataSource">Dinamik veri</span>
-          </div>
+
           <p class="campus-map-status info" id="campusMapStatus">Hazır kampüs profili yüklü. Başka üniversite seçebilir veya arama yapabilirsin.</p>
         </div>
 
@@ -258,7 +244,7 @@
           <aside class="cm-map-sidebar">
             <!-- lokasyon seçme kısmı-->
             <div class="cm-map-panel">
-              <p class="cm-map-panel-title">Lokasyonlar · Tıkla → Odaklan</p>
+              <p class="cm-map-panel-title">Lokasyonlar </p>
               <div id="mapLegendList"></div>
             </div>
             <!--kampüs özeti-->
@@ -334,7 +320,7 @@
         <div class="panel">
           <div class="panel-title">
             <div>
-              <p class="eyebrow">04 / Geleceği hesapla</p>
+              <p class="eyebrow">04 / Senaryo Simülatörü</p>
               <h3>Senaryo Simülatörü</h3>
             </div>
           </div>
@@ -467,7 +453,7 @@
 <section id="factors" class="section-block screen-block">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">05 / Hesaplama dayanağı</p>
+            <p class="eyebrow">05 / Faktörler</p>
             <h3>Emisyon Faktörü Kütüphanesi</h3>
             <p class="muted small-note">Ana hesaplama birimi kg CO₂e’dir. Elektrik için Türkiye’ye özgü resmi faktör kullanılır; diğer demo faktörler gerçek uygulamada kurum/veri kaynağına göre güncellenebilir. Petrol eşdeğeri yalnızca enerji karşılaştırması için yardımcı göstergedir; ana karbon raporlama birimi değildir.</p>
           </div>
