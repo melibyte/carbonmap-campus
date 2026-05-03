@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarbonMap Campus | Kampüs Haritası</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    if (localStorage.getItem("carbonMapCampusLoggedIn") !== "true") {
+      window.location.replace("index.html");
+    }
+  </script>
+</head>
+<body class="is-authenticated" data-app-mode="multipage" data-page="map">
+  <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Menüyü aç/kapat">☰</button>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand brand-logo-only">
+        <img class="brand-logo-img" src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" />
+      </div>
+      <nav class="nav-list">
+        <a href="campus-map.html" class="nav-link active">1. Kampüs Haritası</a><a href="records.html" class="nav-link">2. Kayıt & Raporlama</a><a href="scenario.html" class="nav-link">3. Senaryo & Faktörler</a><a href="#logout" class="nav-link nav-link-logout" data-logout="true">Çıkış Yap</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar fixed-navbar">
+        <div class="navbar-main-row">
+          <div class="navbar-brandline logo-navbar-brandline">
+            <div class="navbar-title-block">
+              <p class="eyebrow">İdari Personel Paneli</p>
+              <img class="navbar-logo-img" src="assets/carbonmap-campus-logo.png" alt="CarbonMap Campus logosu" />
+            </div>
+          </div>
+          <nav class="top-nav" aria-label="Uygulama sayfaları">
+            <a href="campus-map.html" class="nav-link active">Kampüs Haritası</a><a href="records.html" class="nav-link">Kayıt & Raporlama</a><a href="scenario.html" class="nav-link">Senaryo & Faktörler</a><a href="#logout" class="nav-link nav-link-logout" data-logout="true">Çıkış</a>
+          </nav>
+        </div>
+      </header>
+
+      <div class="top-actions navbar-actions page-action-strip" aria-label="Hızlı işlemler">
+        <span class="backend-badge offline" id="backendStatusBadge">Backend: Kapalı</span>
+        <button class="btn btn-secondary" id="seedDemoBtn" type="button">Demo Verisi Üret</button>
+        <button class="btn btn-ghost" id="resetBtn" type="button">Sıfırla</button>
+        <button class="btn btn-primary" id="pdfBtn" type="button">Rapor Oluştur</button>
+        <label class="btn btn-ghost csv-upload-btn" for="csvFile">CSV / Excel Dosya Seç</label>
+        <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" class="visually-hidden" />
+      </div>
+
+      <section class="section-block campus-map-card screen-block" id="campus-map">
+<div class="section-heading">
+<div>
+<h1 class="eyebrow">Görsel karar desteği</h1>
+<h1>Dinamik Üniversite Haritası</h1>
+<!--
+<p class="section-note">Harita artık sadece Düzce Üniversitesi'ne bağlı değil; seçilen veya aranan üniversiteye göre kampüs lokasyonları yeniden yüklenir.</p>
+-->
+</div>
+<div class="map-fit-control">
+<button class="btn btn-ghost" id="mapFitBtn" style="padding:10px 14px;font-size:13px">🗺️ Tüm Kampüsü Göster</button>
+<span class="map-fit-location-count" id="campusLocationCount">— lokasyon</span>
+</div>
+</div>
+<div class="campus-switcher panel">
+<div class="campus-switcher-info">
+<span class="mini-label">Seçili Üniversite</span>
+<h4 id="currentCampusTitle">Düzce Üniversitesi Konuralp Yerleşkesi</h4>
+<p id="currentCampusSubtitle">Hazır kampüs verisi</p>
+</div>
+<div class="campus-switcher-controls">
+<label>
+              Hazır örnek
+              <select id="campusPresetSelect"></select>
+</label>
+<label>
+              Başka üniversite
+              <input id="campusSearchInput" placeholder="Örn: Boğaziçi Üniversitesi İstanbul" type="text"/>
+</label>
+<button class="btn btn-primary" id="campusLoadBtn" type="button">Üniversiteyi Yükle</button>
+</div>
+<p class="campus-map-status info" id="campusMapStatus">Hazır kampüs profili yüklü. Başka üniversite seçebilir veya arama yapabilirsin.</p>
+</div>
+<div class="map-layout">
+<div id="campusMap"></div>
+<aside class="cm-map-sidebar">
+<!-- lokasyon seçme kısmı-->
+<div class="cm-map-panel">
+<p class="cm-map-panel-title">Lokasyonlar · Tıkla → Odaklan</p>
+<div id="mapLegendList"></div>
+</div>
+<!--kampüs özeti-->
+<div class="cm-map-panel">
+<p class="cm-map-panel-title">Kampüs Özeti</p>
+<div class="cm-map-stats">
+<div class="cm-map-stat">
+<span>Toplam Emisyon</span>
+<strong id="mapTotalEmission">—</strong>
+</div>
+<div class="cm-map-stat">
+<span>Aktif Alarm</span>
+<strong id="mapAlarmCount" style="color:#d9480f">—</strong>
+</div>
+<div class="cm-map-stat">
+<span>En Yüksek Risk</span>
+<strong id="mapHighestRisk">—</strong>
+</div>
+<div class="cm-map-stat">
+<span>Ort. Güven</span>
+<strong id="mapAvgConfidence">—</strong>
+</div>
+</div>
+</div>
+<!--
+            <section id="carbon-twin" class="carbon-twin-panel map-twin-card twin-neutral">
+              <div class="twin-copy">
+                <p class="eyebrow">00 / Dijital Karbon İkiz</p>
+                <h3><span id="carbonTwinEmoji">🌱</span> <span id="carbonTwinTitle">Kampüs Ruhu Verileri Bekliyor</span></h3>
+                <p id="carbonTwinMessage">Demo verisi üretildiğinde veya yeni kayıt eklendiğinde kampüsün karbon sağlığı burada canlı olarak özetlenir.</p>
+
+                <div class="twin-meter-wrap">
+                  <div class="twin-meter-top">
+                    <span>Karbon Sağlık Skoru</span>
+                    <strong><span id="carbonTwinScore">0</span>/100</strong>
+                  </div>
+                  <div class="twin-meter"><span id="carbonTwinMeter"></span></div>
+                </div>
+
+                <div class="twin-indicators">
+                  <span id="carbonTwinState">Durum: Bekleniyor</span>
+                  <span id="carbonTwinTrend">Trend: -</span>
+                  <span id="carbonTwinEnergy">Enerji Nabzı: -</span>
+                </div>
+              </div>
+
+              <div class="twin-visual">
+                <div id="campusTree" class="campus-tree normal" aria-label="Kampüs ruhu ağacı">
+                  <div class="tree-glow"></div>
+                  <div class="tree-crown crown crown-1"></div>
+                  <div class="tree-crown crown crown-2"></div>
+                  <div class="tree-crown crown crown-3"></div>
+                  <div class="tree-flower flower-1"></div>
+                  <div class="tree-flower flower-2"></div>
+                  <div class="tree-flower flower-3"></div>
+                  <div class="falling-leaf leaf-1"></div>
+                  <div class="falling-leaf leaf-2"></div>
+                  <div class="falling-leaf leaf-3"></div>
+                  <div class="tree-trunk"></div>
+                  <div class="tree-ground"></div>
+                </div>
+              </div>
+            </section>-->
+</aside>
+</div>
+</section>
+    </main>
+  </div>
+
+  <button aria-label="Yardım Asistanını Aç" class="ai-floating-button" id="aiFloatingButton" type="button">
+<span class="ai-floating-icon">?</span>
+<span class="ai-floating-text">Yardım</span>
+</button>
+  <div aria-live="polite" class="ai-floating-panel" id="aiFloatingPanel">
+<div class="ai-floating-header">
+<div>
+<span class="mini-label">İdari personel rehberi</span>
+<h3>Yardım Asistanı</h3>
+</div>
+<button aria-label="Yardım Asistanını Kapat" class="ai-floating-close" id="aiCloseBtn" type="button">×</button>
+</div>
+<div class="ai-insight-box compact" id="aiInsightBox">
+<span class="mini-label">Kullanım rehberi</span>
+<h4>Excel yerine dashboard kullanımı</h4>
+<p>Bu asistan idari personelin veri girişi, CSV aktarımı, dashboard okuma, harita kullanımı ve PDF rapor alma adımlarında yardımcı olur.</p>
+</div>
+<div class="ai-help-note compact">
+<strong>Örnek kelimeler</strong>
+<div aria-label="Örnek kelimeler" class="ai-example-keywords">
+<span>pdf</span>
+<span>elektrik</span>
+<span>fatura</span>
+<span>dosya yükleme</span>
+<span>harita</span>
+<span>rapor</span>
+<span>emisyon faktörü</span>
+<span>kg CO₂e</span>
+</div>
+</div>
+<div class="ai-chat-messages floating-chat" id="aiChatMessages">
+<div class="ai-message assistant">
+        Merhaba, ben CarbonMap Yardım Asistanı. Bu paneli Excel yerine nasıl kullanacağınızı adım adım anlatabilirim. Sohbet kutusuna bir kelime veya soru yazmaya başlayınca altta benzer sorular öneririm.
+      </div>
+</div>
+<div class="ai-chat-input floating-input">
+<input id="aiQuestionInput" placeholder="Örn: pdf, fatura, elektrik, dosya yükleme..." type="text"/>
+<button class="btn btn-primary" id="aiAskBtn" type="button">Sor</button>
+</div>
+<div class="ai-inline-suggestions" id="aiInlineSuggestions"></div>
+</div>
+  <div class="modal-backdrop" id="modalBackdrop">
+<div class="modal">
+<button class="modal-close" id="modalClose">×</button>
+<div id="modalContent"></div>
+</div>
+</div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

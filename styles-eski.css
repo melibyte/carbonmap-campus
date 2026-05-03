@@ -74,6 +74,22 @@ select {
   display: flex;
   min-height: 100vh;
 }
+/*
+.sidebar {
+  width: 285px;
+  flex: 0 0 285px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border-right: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+*/
 :root {
   --sidebar-width: 280px;
 }
@@ -123,6 +139,7 @@ body.sidebar-closed .main-content {
   top: 0;
   margin-bottom: 18px;
 }
+
 
 .brand {
   display: flex;
@@ -193,6 +210,19 @@ body.sidebar-closed .main-content {
   font-size: 13px;
   line-height: 1.5;
 }
+/*
+.main-content {
+  flex: 1;
+  padding: 28px;
+  max-width: 1520px;
+  margin: 0 auto;
+}
+  .main-content {
+  margin-left: 280px;
+  padding: 28px;
+  min-width: 0;
+}
+*/
 .main-content {
   margin-left: var(--sidebar-width);
   padding: 28px;
@@ -370,6 +400,14 @@ body.sidebar-closed .main-content {
   font-size: 13px;
   margin-top: 4px;
 }
+/*
+.section-block {
+  padding: 22px;
+  border-radius: 30px;
+  margin-bottom: 22px;
+  scroll-margin-top: 20px;
+}
+*/
 .section-block {
   border-radius: 24px;
   padding: 20px;
@@ -538,6 +576,8 @@ th {
   cursor: pointer;
 }
 
+
+
 .legend {
   display: flex;
   align-items: center;
@@ -579,6 +619,8 @@ th {
   gap: 18px;
   align-items: start;
 }
+
+/* ── Leaflet harita container ── */
 #campusMap {
   height: 520px;
   width: 100%;
@@ -587,6 +629,8 @@ th {
   overflow: hidden;
   z-index: 0;
 }
+
+/* ── Özel SVG marker ── */
 .cm-marker {
   background: none !important;
   border: none !important;
@@ -604,6 +648,8 @@ th {
   transform: scale(1.25);
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.28));
 }
+
+/* ── Leaflet popup sarmalayıcı ── */
 .cm-leaflet-popup .leaflet-popup-content-wrapper {
   border-radius: 20px !important;
   padding: 0 !important;
@@ -629,6 +675,8 @@ th {
 .cm-leaflet-popup .leaflet-popup-close-button:hover {
   color: #fff !important;
 }
+
+/* ── Popup içerik ── */
 .cm-popup { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #16231d; }
 .cm-popup-header { display:flex; align-items:center; gap:12px; padding:16px 18px; color:#fff; position:relative; }
 .cm-popup-icon { font-size:26px; line-height:1; flex-shrink:0; }
@@ -653,6 +701,8 @@ th {
 .cm-popup-empty { color:#a0b0a6; font-size:12px; margin:0; }
 .cm-popup-suggestion { font-size:11.5px; color:#4a6b57; line-height:1.55; background:#f0faf4; border:1px solid #cce8d5; border-radius:10px; padding:9px 11px; }
 .cm-map-fallback { height:100%; display:flex; align-items:center; justify-content:center; color:#637369; font-size:14px; font-weight:700; }
+
+/* ── Sağ sidebar ── */
 .cm-map-sidebar { display:flex; flex-direction:column; gap:14px; }
 .cm-map-panel { background:rgba(255,255,255,0.88); border:1px solid #dce8df; border-radius:22px; padding:18px; box-shadow:0 12px 28px rgba(18,40,28,0.07); }
 .cm-map-panel-title { font-size:11px; font-weight:900; color:#0b6b4b; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 12px; }
@@ -660,6 +710,8 @@ th {
 .cm-map-stat { background:#f5fbf7; border:1px solid #dce8df; border-radius:12px; padding:10px 12px; }
 .cm-map-stat span { display:block; font-size:10px; font-weight:800; color:#637369; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
 .cm-map-stat strong { font-size:15px; font-weight:900; letter-spacing:-0.03em; color:#16231d; }
+
+/* Legend liste */
 #mapLegendList { display:flex; flex-direction:column; gap:6px; max-height:360px; overflow-y:auto; padding-right:4px; }
 .cm-legend-item { display:flex; align-items:center; gap:9px; width:100%; background:#f7fbf8; border:1px solid #e4ede6; border-radius:14px; padding:9px 12px; cursor:pointer; transition:background 0.15s, transform 0.15s; text-align:left; }
 .cm-legend-item:hover { background:#eaf7ee; transform:translateX(2px); }
@@ -952,6 +1004,8 @@ th {
   background: linear-gradient(135deg, #fff7df, #fffdfa);
   border-color: #f5ddb0;
 }
+
+/* Dijital Karbon İkiz / Kampüs Ruhu - Kampüs Haritası içine entegre kart */
 .map-layout {
   grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
 }
@@ -1232,6 +1286,10 @@ th {
     min-height: 150px;
   }
 }
+
+/* ─────────────────────────────────────────────
+   Kayıt düzenleme / silme ve responsive iyileştirmeler
+   ───────────────────────────────────────────── */
 .hidden {
   display: none !important;
 }
@@ -1309,6 +1367,47 @@ th {
     justify-content: flex-start;
   }
 }
+/*
+@media (max-width: 1024px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    flex: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: grid;
+  }
+
+  .side-card {
+    margin-top: 0;
+  }
+
+  .hero-panel,
+  .topbar,
+  .section-heading,
+  .panel-title {
+    align-items: stretch;
+  }
+
+  .hero-panel {
+    flex-direction: column;
+  }
+
+  .hero-stats {
+    min-width: 0;
+    width: 100%;
+  }
+}
+*/
 @media (max-width: 1220px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1557,6 +1656,13 @@ th {
     min-height: 320px;
   }
 }
+
+
+/* =========================================================
+   MOBIL / RESPONSIVE SON DÜZELTME PAKETİ
+   Bu blok dosyanın en altında kalmalı.
+   Amaç: telefon ve tablet ekranlarında taşmayı engellemek.
+   ========================================================= */
 html,
 body {
   width: 100%;
@@ -1916,6 +2022,8 @@ button,
     min-height: 310px;
   }
 }
+
+/* === Final sadeleştirme ve navbar düzeni === */
 html {
   scroll-snap-type: none !important;
   scroll-padding-top: 92px;
@@ -2290,6 +2398,8 @@ select {
     min-height: 360px;
   }
 }
+
+/* Dinamik üniversite haritası seçim paneli */
 .section-note {
   margin: 8px 0 0;
   color: #5d6f65;
@@ -2298,30 +2408,11 @@ select {
   line-height: 1.55;
 }
 
-.map-fit-control {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.map-fit-location-count {
-  display: inline-flex;
-  width: max-content;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #edf8f1;
-  color: #0b6b4b;
-  font-size: 11px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
 .campus-switcher {
   margin: 0 0 18px;
   padding: 18px;
   display: grid;
-  grid-template-columns: minmax(220px, 0.85fr) minmax(320px, 1.6fr);
+  grid-template-columns: minmax(220px, 0.85fr) minmax(320px, 1.6fr) auto;
   gap: 16px;
   align-items: end;
   background: rgba(255, 255, 255, 0.92);
@@ -2429,6 +2520,8 @@ select {
     flex-wrap: wrap;
   }
 }
+
+/* === Üst navbar son düzenleme: CarbonMap Campus panel görünümü === */
 html {
   scroll-padding-top: 132px !important;
 }
@@ -2608,6 +2701,9 @@ body.sidebar-closed .topbar.fixed-navbar {
     padding-top: 150px !important;
   }
 }
+
+
+/* Entegre Yardım Asistanı */
 .ai-insight-box {
   border-radius: 22px;
   padding: 18px;
@@ -2692,6 +2788,9 @@ body.sidebar-closed .topbar.fixed-navbar {
 .ai-chat-input input {
   min-height: 48px;
 }
+
+
+/* Yardım Asistanı devam soruları */
 .ai-answer-text {
   white-space: pre-line;
 }
@@ -2732,6 +2831,8 @@ body.sidebar-closed .topbar.fixed-navbar {
   background: #dff7e8;
   transform: translateY(-1px);
 }
+
+/* Yardım Asistanı: yaklaşık soru önerileri */
 .ai-did-you-mean {
   margin-bottom: 12px;
   padding: 11px;
@@ -2787,6 +2888,9 @@ body.sidebar-closed .topbar.fixed-navbar {
   border-radius: 16px;
   padding: 11px;
 }
+
+
+/* Yardım Asistanı: sabit sol soru listesi kaldırıldı; öneriler kullanıcı yazınca sohbet alanının altında çıkar. */
 .ai-help-note {
   border-radius: 22px;
   padding: 16px;
@@ -2829,6 +2933,8 @@ body.sidebar-closed .topbar.fixed-navbar {
   font-size: 12px;
   font-weight: 900;
 }
+
+/* Senaryo Simülatörü: yönetim raporlama ve karar notu alanları */
 .scenario-description {
   margin: 8px 0 14px;
   color: var(--muted);
@@ -2904,6 +3010,8 @@ body.sidebar-closed .topbar.fixed-navbar {
 .scenario-checklist li::marker {
   color: var(--primary);
 }
+
+/* Senaryo Simülatörü: veri yok uyarısı */
 .scenario-warning {
   margin: 12px 0 14px;
   padding: 12px 14px;
@@ -2913,6 +3021,8 @@ body.sidebar-closed .topbar.fixed-navbar {
   color: #7a4b00;
   line-height: 1.55;
 }
+
+/* Sadeleştirilmiş Senaryo Simülatörü sonuç kartları */
 .scenario-mini-help {
   margin-top: 12px;
   padding: 12px 14px;
@@ -3007,6 +3117,8 @@ body.sidebar-closed .topbar.fixed-navbar {
     grid-template-columns: 1fr;
   }
 }
+
+/* Searchable scenario filters */
 .native-scenario-select {
   position: absolute;
   width: 1px;
@@ -3139,6 +3251,8 @@ body.sidebar-closed .topbar.fixed-navbar {
 .scenario-filter-summary strong {
   color: var(--primary);
 }
+
+/* Özel Senaryo Ekleme Alanı */
 .custom-scenario-toggle {
   margin-top: 10px;
   width: fit-content;
@@ -3230,6 +3344,8 @@ body.sidebar-closed .topbar.fixed-navbar {
     grid-template-columns: 1fr;
   }
 }
+
+/* Floating Yardım Asistanı */
 .ai-floating-button {
   position: fixed;
   right: 26px;
@@ -3377,6 +3493,10 @@ body.sidebar-closed .topbar.fixed-navbar {
     display: none;
   }
 }
+
+/* ─────────────────────────────────────────────
+   Web rapor önizleme paneli
+   ───────────────────────────────────────────── */
 .report-section {
   margin-top: 28px;
   padding: 24px;
@@ -3618,68 +3738,88 @@ body.sidebar-closed .topbar.fixed-navbar {
   }
 }
 
-/* Final veri girişi düzeni */
+/* Veri Girişi ve Şeffaf Hesaplama panellerini alt alta yap */
 #data-entry.data-entry-section {
   display: grid !important;
   grid-template-columns: 1fr !important;
-  gap: 20px !important;
+  gap: 18px !important;
   align-items: start !important;
 }
 
+/* Her iki panel tam genişlikte olsun */
 #data-entry.data-entry-section > .panel {
   width: 100% !important;
   min-width: 0 !important;
 }
 
-#data-entry #emissionForm.form-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 18px 20px !important;
-  align-items: end !important;
-}
-
-#data-entry #emissionForm label {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-end !important;
-  gap: 8px !important;
-  min-width: 0 !important;
-  width: 100% !important;
-}
-
-#data-entry #emissionForm input,
-#data-entry #emissionForm select {
-  width: 100% !important;
-  height: 44px !important;
-  box-sizing: border-box !important;
-}
-
-#data-entry #emissionForm label:has(#descriptionInput) {
-  grid-column: span 2 !important;
-}
-
-#data-entry #emissionForm .form-submit {
-  grid-column: 1 / -1 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: 12px !important;
-  margin-top: 6px !important;
-}
-
-#data-entry #emissionForm .form-submit .btn {
-  min-width: 220px !important;
-  height: 46px !important;
-  justify-content: center !important;
-  text-align: center !important;
-  white-space: nowrap !important;
-}
-
+/* Kayıtlar tablosu taşarsa sayfayı bozmasın */
 #data-entry .table-wrap {
   width: 100% !important;
   overflow-x: auto !important;
 }
 
+/* Veri Girişi ve Şeffaf Hesaplama panelleri alt alta */
+#data-entry.data-entry-section {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+
+/* Paneller tam genişlikte olsun */
+#data-entry.data-entry-section > .panel {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Karbon Kaydı Ekle formundaki alanlar yan yana dizilsin */
+#data-entry #emissionForm.form-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(150px, 1fr)) !important;
+  gap: 14px !important;
+  align-items: end !important;
+}
+
+/* Form içindeki label alanları düzgün dursun */
+#data-entry #emissionForm label {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+/* Input ve selectler tam genişlikte olsun */
+#data-entry #emissionForm input,
+#data-entry #emissionForm select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Belge No / Açıklama alanı biraz geniş olsun */
+#data-entry #emissionForm label:has(#descriptionInput) {
+  grid-column: span 2 !important;
+}
+
+/* Kaydet butonları aynı satırda düzgün dursun */
+#data-entry #emissionForm .form-submit {
+  grid-column: span 2 !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: end !important;
+}
+
+/* Butonlar taşmasın */
+#data-entry #emissionForm .form-submit .btn {
+  white-space: nowrap !important;
+}
+
+/* Kayıtlar tablosu taşarsa sayfayı bozmasın */
+#data-entry .table-wrap {
+  width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Orta ekranlarda 2 sütuna düşsün */
 @media (max-width: 950px) {
   #data-entry #emissionForm.form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -3691,445 +3831,10 @@ body.sidebar-closed .topbar.fixed-navbar {
   }
 }
 
+/* Küçük ekranda alt alta insin */
 @media (max-width: 600px) {
   #data-entry #emissionForm.form-grid {
     grid-template-columns: 1fr !important;
   }
-
-  #data-entry #emissionForm .form-submit {
-    flex-direction: column !important;
-  }
-
-  #data-entry #emissionForm .form-submit .btn {
-    width: 100% !important;
-  }
 }
 
-
-/* =========================================================
-   SAYFALI UYGULAMA + GİRİŞ EKRANI DÜZENİ
-   ========================================================= */
-body:not(.is-authenticated) .app-shell,
-body:not(.is-authenticated) .sidebar-toggle,
-body:not(.is-authenticated) .ai-floating-button,
-body:not(.is-authenticated) .ai-floating-panel {
-  display: none !important;
-}
-
-body.is-authenticated #loginPage {
-  display: none !important;
-}
-
-.login-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 28px;
-  background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), transparent 32%),
-    linear-gradient(135deg, #edf6ef 0%, #f8fbf9 52%, #e8f3ee 100%);
-}
-
-.login-card {
-  width: min(520px, 100%);
-  padding: 32px;
-  border: 1px solid rgba(220, 232, 223, 0.98);
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 28px 80px rgba(18, 40, 28, 0.14);
-  backdrop-filter: blur(18px);
-}
-
-.login-brand {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 26px;
-}
-
-.login-logo {
-  width: 58px;
-  height: 58px;
-  flex: 0 0 58px;
-  display: grid;
-  place-items: center;
-  border-radius: 20px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  font-size: 22px;
-  font-weight: 950;
-  letter-spacing: -0.05em;
-  box-shadow: 0 14px 30px rgba(11, 107, 75, 0.24);
-}
-
-.login-logo-image-wrap {
-  width: min(150px, 32vw);
-  height: auto;
-  min-height: 50px;
-  flex: 0 0 min(150px, 32vw);
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  align-items: center;
-  justify-items: center;
-}
-
-.login-logo-img {
-  display: block;
-  width: 80%;
-  max-width: 120px;
-  min-width: 84px;
-  height: auto;
-  object-fit: contain;
-}
-
-.login-brand h1 {
-  margin: 0;
-  font-size: clamp(28px, 4vw, 38px);
-  line-height: 0.96;
-  letter-spacing: -0.06em;
-}
-
-.login-brand p:not(.eyebrow) {
-  margin: 8px 0 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.login-form {
-  display: grid;
-  gap: 14px;
-}
-
-.login-form label {
-  display: grid;
-  gap: 7px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.login-form .btn {
-  width: 100%;
-  justify-content: center;
-}
-
-.register-toggle-btn {
-  margin-top: 2px;
-}
-
-.register-panel {
-  display: grid;
-  gap: 12px;
-  margin: 14px 0 0;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: #f8fbf9;
-}
-
-.register-panel[hidden] {
-  display: none !important;
-}
-
-.register-panel-title {
-  margin: 0;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.register-panel label {
-  display: grid;
-  gap: 7px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.register-panel .btn {
-  width: 100%;
-  justify-content: center;
-}
-
-.register-message {
-  min-height: 18px;
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.45;
-}
-
-.register-message.success {
-  color: var(--primary);
-}
-
-.register-message.error {
-  color: #c92a2a;
-}
-
-.login-hint {
-  margin: 18px 0 0;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #f8fbf9;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-section[hidden] {
-  display: none !important;
-}
-
-.nav-link-logout {
-  margin-top: 4px;
-  color: #c92a2a !important;
-  background: #fff5f5 !important;
-  border: 1px solid #ffd6d6;
-}
-
-.top-nav .nav-link-logout {
-  color: #c92a2a !important;
-}
-
-.top-nav .nav-link-logout:hover,
-.nav-link-logout:hover {
-  color: #fff !important;
-  background: linear-gradient(135deg, #d9480f, #e04b4b) !important;
-  border-color: transparent !important;
-}
-
-@media (max-width: 640px) {
-  .login-page {
-    padding: 16px;
-  }
-
-  .login-card {
-    padding: 22px;
-    border-radius: 24px;
-  }
-
-  .login-brand {
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .login-logo-image-wrap {
-    width: min(122px, 34vw);
-    flex-basis: min(122px, 34vw);
-    min-height: 42px;
-  }
-
-  .login-logo-img {
-    width: 80%;
-    max-width: 96px;
-    min-width: 68px;
-  }
-
-  .section-heading {
-    align-items: flex-start;
-  }
-
-  .map-fit-control {
-    align-items: flex-start;
-  }
-}
-
-
-/* === CarbonMap Campus logo replacement - minimal responsive update === */
-.brand.brand-logo-only {
-  justify-content: flex-start;
-  min-height: 82px;
-}
-
-.brand-logo-img {
-  display: block;
-  width: 70%;
-  max-width: 190px;
-  min-width: 145px;
-  height: auto;
-  object-fit: contain;
-}
-
-.logo-navbar-brandline {
-  min-width: 245px;
-}
-
-.navbar-title-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-}
-
-.navbar-logo-img {
-  display: block;
-  width: 70%;
-  max-width: 170px;
-  min-width: 135px;
-  height: auto;
-  object-fit: contain;
-}
-
-body.is-authenticated .main-content {
-  padding-top: 124px !important;
-}
-
-@media (max-width: 1180px) {
-  .logo-navbar-brandline {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .navbar-logo-img {
-    max-width: 160px;
-    min-width: 128px;
-  }
-
-  body.is-authenticated .main-content {
-    padding-top: 152px !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .brand.brand-logo-only {
-    min-height: 74px;
-  }
-
-  .brand-logo-img {
-    max-width: 165px;
-    min-width: 128px;
-  }
-
-  .navbar-logo-img {
-    max-width: 145px;
-    min-width: 118px;
-  }
-
-  body.is-authenticated .main-content {
-    padding-top: 148px !important;
-  }
-}
-
-/* === Son düzenleme: harita yükle butonu ve yardım paneli taşma düzeltmesi === */
-.campus-switcher,
-.campus-switcher-controls,
-.campus-switcher-controls label {
-  min-width: 0;
-}
-
-.campus-switcher {
-  grid-template-columns: minmax(210px, 0.78fr) minmax(0, 1.9fr);
-}
-
-.campus-switcher-controls {
-  grid-template-columns: minmax(145px, 0.75fr) minmax(180px, 1fr) minmax(160px, 178px);
-}
-
-#campusLoadBtn {
-  width: 100%;
-  min-width: 0;
-  max-width: 178px;
-  justify-self: end;
-  padding: 11px 12px;
-  font-size: 15px;
-  line-height: 1.15;
-  border-radius: 16px;
-}
-
-.ai-floating-panel {
-  overflow: hidden;
-  max-height: min(640px, calc(100vh - 116px));
-}
-
-.ai-floating-header,
-.ai-chat-input.floating-input {
-  flex: 0 0 auto;
-}
-
-.ai-insight-box.compact,
-.ai-help-note.compact {
-  flex: 0 0 auto;
-}
-
-.ai-chat-messages.floating-chat {
-  height: 160px;
-  min-height: 125px;
-  flex: 1 1 160px;
-  overflow-y: auto;
-}
-
-.ai-floating-panel .ai-inline-suggestions {
-  flex: 0 0 auto;
-  max-height: 88px;
-  overflow-y: auto;
-}
-
-@media (max-width: 1120px) {
-  .campus-switcher {
-    grid-template-columns: 1fr;
-  }
-
-  .campus-switcher-controls {
-    grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1fr) minmax(160px, 178px);
-  }
-}
-
-@media (max-width: 820px) {
-  .campus-switcher-controls {
-    grid-template-columns: 1fr;
-  }
-
-  #campusLoadBtn {
-    max-width: none;
-    justify-self: stretch;
-  }
-}
-
-@media (max-height: 760px) {
-  .ai-floating-panel {
-    bottom: 82px;
-    max-height: calc(100vh - 100px);
-    gap: 8px;
-    padding: 12px;
-  }
-
-  .ai-chat-messages.floating-chat {
-    height: 130px;
-    min-height: 110px;
-  }
-
-  .ai-help-note.compact .ai-example-keywords span {
-    padding: 6px 9px;
-    font-size: 11px;
-  }
-}
-
-/* === Son düzenleme: aylık/yıllık grafik filtresi ve temiz kampüs alt başlığı === */
-.chart-period-select {
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 7px 12px;
-  background: #f8fcfa;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-  outline: none;
-}
-
-.chart-period-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(11, 107, 75, 0.10);
-}
-
-@media (max-width: 520px) {
-  .chart-period-select {
-    width: 100%;
-  }
-}
