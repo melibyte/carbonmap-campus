@@ -93,9 +93,7 @@ http://127.0.0.1:8000/docs
 8. Hesaplama Dayanağı bölümünde kullanılan emisyon faktörlerini gösterin.
 9. **PDF Rapor Al** butonuyla rapor çıktısını gösterin.
 
-## Jüriye Söylenebilecek Cümle
 
-CarbonMap Campus yalnızca karbon hesaplayan bir arayüz değil; FastAPI backend'iyle verileri SQLite üzerinde saklayan, karbon hesaplamasını API tarafında yapabilen, veri güvenini puanlayan, karbon bütçesi aşımını yakalayan, anomali tespit eden ve azaltım aksiyonlarını önceliklendiren kampüs karbon karar destek yazılımıdır.
 
 ## Kullanılan Teknolojiler
 

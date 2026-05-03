@@ -3,3 +3,5 @@ backend/data/*.sqlite3
 backend/data/*.sqlite3-*
 __pycache__/
 *.pyc
+
+.vscode/
