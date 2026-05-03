@@ -1,156 +1,359 @@
-# CarbonMap Campus Demo + Backend
+# CarbonMap Campus
 
-CarbonMap Campus, üniversite kampüsleri için hazırlanmış karbon ayak izi yönetim prototipidir.
+**CarbonMap Campus**, üniversite kampüslerinde oluşan karbon ayak izini takip etmek, analiz etmek, raporlamak ve azaltım senaryoları üretmek için geliştirilen hackathon prototipidir.
 
-Bu sürümde mevcut frontend korunmuştur. Ek olarak FastAPI + SQLite backend eklendi. Backend açık olduğunda veriler API üzerinden SQLite veritabanına kaydedilir. Backend kapalıysa uygulama eski güvenli moduyla tarayıcı localStorage üzerinde çalışmaya devam eder.
+Proje; idari personelin Excel tabanlı dağınık takip sürecini daha anlaşılır, görsel ve karar destekli bir web paneline dönüştürmeyi amaçlar. Kullanıcılar kampüs lokasyonlarını harita üzerinde görebilir, karbon kayıtları ekleyebilir, CSV/Excel dosyası aktarabilir, dashboard üzerinden emisyon dağılımlarını inceleyebilir, senaryo simülatörü ile azaltım etkisini hesaplayabilir ve rapor önizlemesi üzerinden PDF/Excel çıktısı alabilir.
 
-## İçindeki Özellikler
+---
 
-Bu sürümde arayüz sadeleştirildi ve ana akış 5 bölüme indirildi:
+## Proje Özeti
 
-1. Veri Toplama
-2. Dashboard
-3. Görsel Karar Desteği
-4. Geleceği Hesapla
-5. Hesaplama Dayanağı
+Üniversitelerde elektrik, ulaşım, yemekhane, etkinlik, satın alma ve yakıt gibi farklı kaynaklardan karbon emisyonu oluşur. Bu veriler çoğu zaman farklı birimlerde, farklı Excel dosyalarında veya manuel listelerde tutulduğu için yöneticilerin bütün resmi görmesi zorlaşır.
 
-Öne çıkan özellikler:
+**CarbonMap Campus**, bu sorunu çözmek için:
 
-- Sabit sol sidebar ve çakışma yapmayan menü butonu
-- Tek başlıklı sade tepe navbarı
-- Manuel veri girişi
-- Dashboard kartları
-- Kategori, lokasyon, aylık trend ve Scope grafikleri
-- Dinamik üniversite/kampüs haritası
-- Hazır kampüs seçimi + özel üniversite arama alanı
-- Lokasyon bazlı risk renklendirme
-- Senaryo simülatörü
-- Tahmini maliyet tasarrufu hesabı
-- Emisyon faktörü kütüphanesi
-- FastAPI tabanlı karbon hesaplama API'si
-- SQLite veritabanı ile kayıt saklama
-- Backend durum göstergesi
-- Hesaplama açıklama paneli
-- Ana sayfada rapor oluşturma/filtreleme paneli
-- Oluşan raporu ayrı `report-preview.html` sayfasında açma
-- Aylık/yıllık ve lokasyon bazlı rapor filtresi
-- Yeni rapor sayfasından PDF olarak yazdırma veya Excel indirme
-- PDF rapor oluşturma
-- Demo verisi üretme butonu
+- Ham tüketim verisini alır.
+- Veriyi uygun emisyon faktörüyle kgCO₂e değerine çevirir.
+- Hangi bina, lokasyon veya faaliyetin daha fazla emisyon ürettiğini gösterir.
+- Dashboard, harita ve grafiklerle karar desteği sunar.
+- Azaltım senaryoları ile tahmini çevresel ve maddi faydayı hesaplar.
+- PDF/Excel rapor çıktısı oluşturmadan önce web üzerinde rapor önizlemesi sağlar.
 
-## En Kolay Çalıştırma
+---
 
-### Windows
+## Hedef Kullanıcı
 
-1. Zip dosyasını çıkarın.
-2. Klasörün içinde `run-backend.bat` dosyasına çift tıklayın.
-3. Kurulum bittikten sonra tarayıcıdan şu adresi açın:
+Bu prototip özellikle **üniversite idari personeli** için tasarlanmıştır.
+
+Hedeflenen kullanıcılar:
+
+- İdari ve Mali İşler birimi
+- Yapı İşleri / Teknik birimler
+- Sürdürülebilirlik ofisi
+- Kampüs yönetimi
+- Rektörlük veya yönetim raporlama ekipleri
+
+---
+
+## Temel Özellikler
+
+### 1. Kullanıcı Girişi
+
+- Demo kullanıcı ile hızlı giriş yapılabilir.
+- Yeni kullanıcı kayıt ekranı bulunur.
+- Demo sürümünde kimlik doğrulama tarayıcı tarafında simüle edilir.
+
+**Demo giriş bilgileri:**
 
 ```text
-http://127.0.0.1:8000
+E-posta: idari.personel@carbonmap.edu.tr
+Şifre: demo123
 ```
 
-### macOS / Linux
+### 2. Dinamik Kampüs Haritası
+
+- Kampüs lokasyonları harita üzerinde gösterilir.
+- Hazır kampüs seçenekleri kullanılabilir.
+- Kullanıcı farklı üniversite araması yapabilir.
+- Harita, seçilen üniversiteye göre yeniden konumlanır.
+- Lokasyonlar emisyon/risk durumuna göre renklendirilir.
+
+### 3. Karbon Kaydı Ekleme
+
+Kullanıcı aşağıdaki alanlarla karbon kaydı oluşturabilir:
+
+- Lokasyon
+- Kategori
+- Tüketim miktarı
+- Veri kaynağı
+- Kayıt durumu
+- Tarih
+- Açıklama
+
+Sistem, kategoriye göre ilgili birimi ve emisyon faktörünü kullanarak toplam emisyonu otomatik hesaplar.
+
+### 4. CSV / Excel Aktarımı
+
+- `.csv`, `.xlsx` ve `.xls` dosyaları desteklenir.
+- Kullanıcı dosyadaki sütunları sistem alanlarıyla eşleştirebilir.
+- Toplu veri aktarımı yapılabilir.
+- Bu özellik, Excel’den sisteme geçişi kolaylaştırmak için eklenmiştir.
+
+### 5. Dashboard
+
+Dashboard üzerinde:
+
+- Toplam emisyon
+- En yüksek kategori
+- En yüksek lokasyon
+- Veri güven skoru
+- Kategori dağılımı
+- Lokasyon dağılımı
+- Aylık/yıllık trend grafiği
+- Scope 1 / Scope 2 / Scope 3 dağılımı
+
+görüntülenir.
+
+### 6. Rapor Önizleme
+
+PDF veya Excel çıktısı alınmadan önce rapor web sayfasında gösterilir.
+
+Rapor filtreleri:
+
+- Üniversite / kampüs
+- Lokasyon
+- Aylık rapor
+- Yıllık rapor
+
+Rapor sayfasında kullanıcı önce sonucu kontrol eder, sonra isterse:
+
+- PDF olarak yazdırır.
+- Excel olarak indirir.
+
+### 7. Senaryo Simülatörü
+
+Kullanıcı azaltım senaryosu seçerek veya yeni senaryo tanımlayarak şu sorulara cevap alabilir:
+
+- Bu aksiyon uygulanırsa ne kadar emisyon azalır?
+- Yeni emisyon değeri ne olur?
+- Tahmini maliyet faydası nedir?
+- Bu aksiyon kısa vadeli mi, uzun vadeli mi?
+- Hangi birim bu aksiyondan sorumlu olabilir?
+
+Örnek senaryolar:
+
+- LED aydınlatmaya geçiş
+- Mesai dışı cihaz kapatma politikası
+- Hareket sensörlü aydınlatma
+- Gıda israfı takibi
+- Servis optimizasyonu
+- Satın alma politikası iyileştirmesi
+
+### 8. Emisyon Faktörü Kütüphanesi
+
+Sistemde kullanılan kategoriler ve örnek faktörler:
+
+| Kategori | Birim | Scope | Açıklama |
+|---|---:|---|---|
+| Elektrik | kWh | Scope 2 | Elektrik tüketimi kaynaklı emisyon |
+| Ulaşım | km | Scope 3 | Servis, araç veya ulaşım kaynaklı emisyon |
+| Yemekhane | öğün | Scope 3 | Öğün ve gıda tüketimi kaynaklı emisyon |
+| Etkinlik | kişi | Scope 3 | Etkinlik katılımcı/organizasyon emisyonu |
+| Satın Alma | adet | Scope 3 | Ürün veya sarf malzeme kaynaklı emisyon |
+| Yakıt | L | Scope 1 | Yakıt tüketimi kaynaklı doğrudan emisyon |
+
+> Not: Bu prototipte kullanılan faktörlerin bir kısmı demo amaçlıdır. Gerçek kurum kullanımında güncel resmi emisyon faktörleri ve kurumun doğrulanmış tüketim verileriyle güncellenmelidir.
+
+### 9. Yardım Asistanı
+
+- Sağ alt köşede sabit şekilde çalışır.
+- Her sayfadan erişilebilir.
+- İdari personele veri girişi, dosya yükleme, dashboard okuma ve rapor alma konularında yardımcı olur.
+
+---
+
+## Kullanılan Teknolojiler
+
+### Frontend
+
+- HTML5
+- CSS3
+- JavaScript
+- Chart.js
+- Leaflet.js
+- OpenStreetMap
+- jsPDF
+- SheetJS / XLSX
+- PapaParse
+
+### Backend
+
+- Python
+- FastAPI
+- SQLite
+- Uvicorn
+- Pydantic
+
+---
+
+## Proje Yapısı
+
+```text
+.
+├── assets/
+│   └── carbonmap-campus-logo.png
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   └── main.py
+│   ├── data/
+│   │   └── carbonmap.sqlite3
+│   ├── requirements.txt
+│   └── schema.sql
+├── app.js
+├── styles.css
+├── styles-eski.css
+├── index.html
+├── campus-map.html
+├── records.html
+├── scenario.html
+├── report-preview.html
+├── run-backend.bat
+├── run-backend.sh
+├── .gitignore
+└── README.md
+```
+
+---
+
+## Kurulum ve Çalıştırma
+
+### 1. Projeyi Bilgisayara Alın
 
 ```bash
+git clone <repo-linki>
+cd <proje-klasoru>
+```
+
+Zip olarak indirildiyse dosyayı çıkarıp proje klasörünü açın.
+
+---
+
+### 2. Backend'i Başlatın
+
+#### Windows
+
+PowerShell veya CMD üzerinde proje klasöründeyken:
+
+```powershell
+.\run-backend.bat
+```
+
+#### macOS / Linux
+
+```bash
+chmod +x run-backend.sh
 ./run-backend.sh
 ```
 
-Sonra:
+Backend çalıştığında API şu adreste açılır:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## Sadece Frontend Olarak Açmak İsterseniz
-
-`index.html` dosyasını doğrudan tarayıcıda açabilirsiniz. Bu durumda backend kapalı uyarısı görünür, ancak demo localStorage ile çalışmaya devam eder.
-
-## API Dokümantasyonu
-
-Backend çalışırken şu adrese girin:
+API dokümantasyonu:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-## Önemli Backend Endpoint'leri
+---
 
-- `GET /api/health` backend durum kontrolü
-- `GET /api/records` kayıtları listeler
-- `POST /api/records` tek karbon kaydı ekler
-- `POST /api/records/bulk` toplu kayıt ekler
-- `POST /api/seed` demo verilerini SQLite veritabanına yazar
-- `DELETE /api/records` tüm kayıtları temizler
-- `GET /api/dashboard` dashboard özetini döndürür
-- `POST /api/scenario` azaltım senaryosu hesaplar
+### 3. Frontend'i Açın
 
-## Demo Akışı Önerisi
+Önerilen yöntem: VS Code içinde **Live Server** kullanmak.
 
-1. Backend'i başlatın ve `http://127.0.0.1:8000` adresine girin.
-2. Sol menüde sıralamanın Veri Toplama → Dashboard → Görsel Karar Desteği → Geleceği Hesapla → Hesaplama Dayanağı şeklinde olduğunu gösterin.
-3. **Demo Verisi Üret** butonuna basın.
-4. Veri Toplama bölümünde kayıt ekleme/düzenleme alanını gösterin.
-5. Dashboard bölümünde toplam emisyon, en yüksek kategori ve grafik özetlerini gösterin.
-6. Görsel Karar Desteği bölümünde önce hazır kampüslerden ODTÜ/İTÜ gibi bir örnek seçin; sonra isterseniz “Başka üniversite ara” ile farklı bir üniversite adı girerek haritanın dinamik değiştiğini gösterin.
-7. Geleceği Hesapla bölümünde bir azaltım senaryosu çalıştırın.
-8. Hesaplama Dayanağı bölümünde kullanılan emisyon faktörlerini gösterin.
-9. Ana sayfadaki **Rapor Oluştur** butonuyla Dashboard içindeki rapor filtrelerine gidin.
-10. Rapor filtrelerinden aylık/yıllık dönem ve lokasyon seçimini gösterin.
-11. **Raporu Yeni Sayfada Aç** butonuna basarak raporun ayrı sayfada açıldığını gösterin.
-12. Yeni rapor sayfasında **PDF Olarak Yazdır** veya **Excel İndir** butonlarını kullanın.
+1. Proje klasörünü VS Code ile açın.
+2. `index.html` dosyasına sağ tıklayın.
+3. **Open with Live Server** seçeneğine basın.
+4. Tarayıcıda giriş sayfası açılır.
+5. Demo giriş bilgileriyle sisteme girin.
 
-## Jüriye Söylenebilecek Cümle
+Demo giriş:
 
-CarbonMap Campus yalnızca karbon hesaplayan bir arayüz değil; FastAPI backend'iyle verileri SQLite üzerinde saklayan, karbon hesaplamasını API tarafında yapabilen, veri güvenini puanlayan, karbon bütçesi aşımını yakalayan, anomali tespit eden ve azaltım aksiyonlarını önceliklendiren kampüs karbon karar destek yazılımıdır.
+```text
+E-posta: idari.personel@carbonmap.edu.tr
+Şifre: demo123
+```
 
-## Kullanılan Teknolojiler
+> Backend kapalı olsa bile uygulama demo modunda tarayıcı `localStorage` üzerinde çalışmaya devam eder. Backend açıkken Düzce Üniversitesi varsayılan kampüs kayıtları FastAPI + SQLite üzerinden saklanır.
 
-- HTML
-- CSS
-- JavaScript
-- Chart.js
-- jsPDF
-- PapaParse
-- SheetJS / XLSX
-- Python
-- FastAPI
-- SQLite
-- Uvicorn
-- Leaflet
-- OpenStreetMap / Nominatim / Overpass API
+---
 
-## Not
+## API Endpointleri
 
-Chart.js, jsPDF, PapaParse ve SheetJS CDN üzerinden yüklendiği için internet bağlantısı gerekir. İnternet yoksa arayüz açılır; ancak grafik, CSV okuma, PDF veya Excel özellikleri CDN erişimine bağlıdır. Excel kütüphanesi yüklenemezse rapor CSV olarak indirilmeye çalışılır.
+| Method | Endpoint | Açıklama |
+|---|---|---|
+| GET | `/api/health` | Backend durumunu kontrol eder |
+| GET | `/api/records` | Karbon kayıtlarını listeler |
+| POST | `/api/records` | Yeni karbon kaydı ekler |
+| PUT | `/api/records/{record_id}` | Mevcut kaydı günceller |
+| DELETE | `/api/records/{record_id}` | Tek kaydı siler |
+| POST | `/api/records/bulk` | Toplu kayıt ekler |
+| DELETE | `/api/records` | Tüm kayıtları temizler |
+| POST | `/api/seed` | Demo verisi üretir |
+| GET | `/api/dashboard` | Dashboard özet verilerini döndürür |
+| POST | `/api/scenario` | Senaryo azaltım hesabı yapar |
 
-## Dinamik Harita Güncellemesi
+---
 
-Bu sürümde harita sadece Düzce Üniversitesi verisine bağlı olmaktan çıkarıldı.
+## Demo Akışı
 
-Yeni yapı:
+Jüri veya mentör sunumunda aşağıdaki akış kullanılabilir:
 
-- Harita bölümüne **Seçili Üniversite** paneli eklendi.
-- Hazır örnekler: Düzce Üniversitesi Konuralp Yerleşkesi, ODTÜ, İTÜ Ayazağa.
-- **Başka üniversite ara...** seçeneğiyle kullanıcı üniversite adı + şehir yazabilir.
-- İnternet varsa uygulama OpenStreetMap/Nominatim ile üniversite merkezini bulur ve Overpass üzerinden yakın kampüs lokasyonlarını çekmeye çalışır.
-- İnternet yoksa veya yeterli bina/lokasyon verisi bulunamazsa uygulama seçilen üniversite için otomatik kampüs şablonu üretir.
-- Demo verisi artık sabit Düzce kayıtlarına göre değil, **seçili kampüs lokasyonlarına göre** oluşturulur.
-- Her üniversitenin kayıtları localStorage üzerinde ayrı anahtarla tutulur; böylece Düzce verisi ile başka üniversite verisi birbirine karışmaz.
+1. Giriş ekranını gösterin.
+2. Demo kullanıcı ile sisteme giriş yapın.
+3. Kampüs haritasında lokasyonların görsel olarak listelendiğini gösterin.
+4. Farklı üniversite seçimi veya arama alanını gösterin.
+5. Kayıt & Raporlama sayfasına geçin.
+6. Manuel karbon kaydı ekleyin veya demo verisi üretin.
+7. Dashboard kartlarında toplam emisyon, en yüksek kategori ve en yüksek lokasyonu açıklayın.
+8. Grafiklerle emisyon dağılımlarını gösterin.
+9. CSV/Excel dosyası aktarım alanını gösterin.
+10. Rapor filtrelerinden lokasyon ve dönem seçin.
+11. Raporu yeni sayfada açarak PDF/Excel çıktısından önce web önizlemesi yapıldığını gösterin.
+12. Senaryo & Faktörler sayfasında bir azaltım senaryosu hesaplayın.
+13. Maliyet faydası ve emisyon azaltımını jüriye karar destek çıktısı olarak anlatın.
+14. Emisyon faktörü kütüphanesinin güncellenebilir olduğunu vurgulayın.
+15. Sağ alttaki yardım asistanının her sayfadan erişilebilir olduğunu gösterin.
 
-Not: Hazır örneklerin ve otomatik şablonun koordinatları prototip/demo amaçlıdır. Gerçek kullanımda üniversite yönetiminin bina koordinatları veya resmi kampüs veri setiyle hassaslaştırılması önerilir.
+---
 
+## Jüriye Kısa Anlatım
 
-## Ayrı Sayfada Web Rapor Önizleme
+> CarbonMap Campus, üniversite idari personelinin dağınık Excel verilerini tek bir karar destek panelinde birleştirerek kampüs bazlı karbon emisyonunu hesaplayan, haritada görselleştiren, azaltım senaryoları üreten ve PDF/Excel rapor önizlemesi sunan sürdürülebilirlik odaklı bir web prototipidir.
 
-Bu sürümde rapor oluşturma/filtreleme alanı ana sayfada kalır; fakat oluşan rapor artık ana sayfanın içinde açılmaz. Kullanıcı:
+---
 
-- Ana sayfadaki **Rapor Oluştur** butonuyla Dashboard bölümündeki rapor filtrelerine gider.
-- Seçili üniversite/kampüs bilgisini görür.
-- Tüm lokasyonlar veya tek bir lokasyon seçebilir.
-- Aylık veya yıllık rapor filtresi uygulayabilir.
-- **Raporu Yeni Sayfada Aç** butonuna bastığında rapor `report-preview.html` sayfasında yeni sekmede açılır.
-- Yeni sayfada toplam kayıt, toplam emisyon, en yüksek kategori, en yüksek lokasyon ve veri güven skorunu kontrol eder.
-- Raporu kontrol ettikten sonra PDF olarak yazdırabilir veya Excel formatında indirebilir.
+## Projeyi Öne Çıkaran Noktalar
 
-Bu yapı ana sayfayı sade tutar ve hocanın istediği “PDF/Excel indirmeden önce web sayfasında rapor görünsün” akışını ayrı rapor sayfasıyla karşılar.
+- Sadece hesaplama yapmaz, karar desteği sunar.
+- Harita, dashboard, senaryo ve raporlama akışını tek sistemde birleştirir.
+- İdari personelin kullanabileceği sade ve anlaşılır bir arayüz hedefler.
+- Excel’den geçişi kolaylaştırmak için CSV/Excel içe aktarma desteği sunar.
+- PDF/Excel indirmeden önce web rapor önizlemesi verir.
+- Backend kapalıyken bile demo modunda çalışabilir.
+- Üniversite/kampüs yapısına göre genişletilebilir.
+
+---
+
+## Geliştirilebilir Alanlar
+
+Bu proje hackathon prototipi olarak geliştirilmiştir. Gerçek kurum kullanımında aşağıdaki geliştirmeler yapılabilir:
+
+- Gerçek kullanıcı yetkilendirme sistemi
+- Kurumsal veritabanı entegrasyonu
+- Resmi emisyon faktörü yönetim paneli
+- Bina bazlı sayaç entegrasyonu
+- Fatura/PDF okuma ve otomatik veri çıkarma
+- Detaylı Scope 1, Scope 2, Scope 3 raporlama
+- Yönetici onay akışı
+- Kurumsal sürdürülebilirlik raporu formatı
+- Gerçek kampüs koordinat veri seti entegrasyonu
+
+---
+
+## Takım
+
+**Takım Adı:** LogicWaves  
+**Proje Adı:** CarbonMap Campus
+
+---
+
+## Notlar
+
+- Bu proje hackathon/demo amacıyla hazırlanmıştır.
+- Demo emisyon faktörleri gerçek uygulamada resmi ve güncel kaynaklarla doğrulanmalıdır.
+- Bazı kütüphaneler CDN üzerinden yüklendiği için grafik, harita, Excel ve PDF özellikleri için internet bağlantısı önerilir.
+- `.venv/` ve `backend/data/*.sqlite3` dosyaları GitHub'a yüklenmemelidir; `.gitignore` içinde hariç tutulmuştur.
